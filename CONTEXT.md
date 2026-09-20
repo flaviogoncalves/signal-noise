@@ -14,7 +14,7 @@ To obtain a transcript that **already exists**, by reading it out of the page. N
 
 To **create** a transcript that does not exist, by running speech-to-text over captured audio.
 
-**This project never transcribes.** It only harvests. An episode with no captions is an [[Uncaptioned Episode]] and is refused. Despite the project name, no audio is ever processed.
+**This project never transcribes.** It only harvests. An episode with no captions is an [[Uncaptioned Episode]] and is refused. Despite the CLI's name, `yttranscribe`, no audio is ever processed.
 
 ## Uncaptioned Episode
 

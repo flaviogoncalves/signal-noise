@@ -43,7 +43,7 @@ Note what happened to `17:20`. It is the most quotable chapter in the video, and
 
 No build step, no Web Store. About a minute, plus a SipPulse AI key.
 
-1. **Download the code.** Either `git clone https://github.com/flaviogoncalves/yttranscribe.git`, or use **Code → Download ZIP** on this page and unzip it.
+1. **Download the code.** Either `git clone https://github.com/flaviogoncalves/signal-noise.git`, or use **Code → Download ZIP** on this page and unzip it.
 2. Open Chrome and go to **`chrome://extensions`** (type it in the address bar — it is not in the menus).
 3. Turn on **Developer mode** with the toggle in the **top-right** corner. Nothing appears to happen; this just reveals the buttons in step 4.
 4. Click **Load unpacked** (top-left).
@@ -85,8 +85,8 @@ The extension asks for four permissions — `sidePanel`, `scripting`, `storage`,
 Optional. Same code, useful for batches and for piping into other tools.
 
 ```bash
-git clone https://github.com/flaviogoncalves/yttranscribe.git
-cd yttranscribe
+git clone https://github.com/flaviogoncalves/signal-noise.git
+cd signal-noise
 npm install && npm run build
 
 # print to stdout
@@ -209,7 +209,7 @@ The code is here if you want to know more: the network layer is [`src/youtube/fe
 - **Offer a choice of provider or model.** One key, one model, found among the models the key can use — see [ADR 0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md). To use the skill with another model, load it into that model's agent instead.
 - **Verify externally, in the extension.** The skill's `Verified addition` block needs tools the extension does not have, so it is switched off there rather than filled from the model's memory — see [ADR 0005](./docs/adr/0005-the-skill-file-is-the-prompt.md). Complete in the extension is the skill's Complete minus that one block.
 
-The project name is a mild misnomer: it harvests transcripts and never transcribes. Kept because it is short.
+The CLI's name, `yttranscribe`, is a mild misnomer: it harvests transcripts and never transcribes. Kept because it is short.
 
 ## Development
 

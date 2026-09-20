@@ -6,7 +6,7 @@
   "author": "Flavio E Goncalves",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/flaviogoncalves/yttranscribe.git"
+    "url": "git+https://github.com/flaviogoncalves/signal-noise.git"
   },
   "type": "module",
   "scripts": {
