@@ -100,11 +100,11 @@ Download the ZIP again, unzip it, and replace the old `signal-noise-main` folder
 Two choices sit above the **Evaluate this video** button, and both are remembered:
 
 - **Complete / Fast.** Complete is the full evaluation: verdict, what is new, thesis, signal, skip list, numbers, tensions. Fast keeps only the essential — verdict, what is new, at most five lines of signal — and ends with one line saying what Complete would add. Fast reports less; it does not read less. Both judge the whole transcript by the same rules.
-- **Output language.** Your browser's language by default, a language you pick, or "same as the video". Chapter titles, quotes and technical terms stay in the original either way, so anchors still match what YouTube shows you.
+- **Output language.** Your browser's language by default (**Auto**), a language you pick, or "same as the video". Chapter titles, quotes and technical terms stay in the original either way, so anchors still match what YouTube shows you.
 
 **Copy transcript** puts the episode's full transcript on your clipboard, for pasting into anything else. **Copy summary** copies the evaluation as Markdown.
 
-The extension asks for four permissions — `sidePanel`, `scripting`, `storage`, and `clipboardWrite` — and is restricted to two hosts: `https://www.youtube.com/*` and `https://api.sippulse.ai/*`. It has no server of its own and no analytics. The key is stored in this browser only, never synced, and **Remove key** deletes it. Nothing leaves for SipPulse AI until you click Evaluate, and then what leaves is the transcript of that one video; Copy transcript talks to nobody but YouTube.
+The extension asks for four permissions — `sidePanel`, `scripting`, `storage`, and `clipboardWrite` — and is restricted to two hosts: `https://www.youtube.com/*` and `https://api.sippulse.ai/*`. It has no server of its own and no analytics — the full [privacy policy](./PRIVACY.md) is one page. The key is stored in this browser only, never synced, and **Remove key** deletes it. Nothing leaves for SipPulse AI until you click Evaluate, and then what leaves is the transcript of that one video; Copy transcript talks to nobody but YouTube.
 
 <details>
 <summary><strong>If it does not work</strong></summary>
@@ -184,9 +184,10 @@ It is called `yttranscribe`, a mild misnomer kept because it is short: it harves
 ## Development
 
 ```bash
-npm test          # 102 tests
+npm test          # 105 tests
 npm run typecheck
 npm run build     # CLI to dist/, extension to extension/js/
+npm run package   # dist/signal-noise-<version>.zip, for the Chrome Web Store
 ```
 
 Pure logic is tested — caption parsing, reading the watch page and the transcript panel's lines, track selection, chapter parsing, URL parsing, formatting, prompt assembly, stream parsing, model resolution, and the Markdown renderer's escaping. `fetchEpisode` and the code injected into the YouTube page (`src/extension/readPage.ts`) are thin adapters over a third party that changes without notice, so they are verified by running them rather than by fixtures that would give false confidence.
@@ -197,8 +198,10 @@ The icons in `extension/icons/` are PNGs rendered from two SVGs — `icon-small.
 
 ## Docs
 
+- [PRIVACY.md](./PRIVACY.md) — what the extension reads, sends and stores
 - [CONTEXT.md](./CONTEXT.md) — glossary
 - [docs/adr/](./docs/adr/) — decisions: [0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md), why the extension now evaluates; [0005](./docs/adr/0005-the-skill-file-is-the-prompt.md), why the rules file itself is the prompt; [0006](./docs/adr/0006-a-side-panel-not-a-popup.md), why a side panel; [0007](./docs/adr/0007-the-extension-reads-the-transcript-youtube-shows.md), why the extension reads YouTube's own transcript panel; and [0001](./docs/adr/0001-browser-extension-because-sabr-killed-server-side-captions.md), kept as a record of a wrong turn
+- [store/](./store/) — the Chrome Web Store listing: texts, permission justifications and images ([LISTING.md](./store/LISTING.md))
 - [docs/spec/](./docs/spec/) — the original spec, now largely overtaken
 
 ## License

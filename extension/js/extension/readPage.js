@@ -49,24 +49,39 @@ export async function readTranscriptPanel(preferredLabel) {
     const found = panel;
     const close = () => found.querySelector("#visibility-button button")?.click();
     const shownLabel = () => found.querySelector("ytd-transcript-footer-renderer")?.innerText.trim() || undefined;
-    if (preferredLabel) {
-        // The menu's items are in the page before the menu is opened, so the wanted one can be clicked directly.
-        const item = await until(() => Array.from(found.querySelectorAll("ytd-transcript-footer-renderer yt-dropdown-menu a")).find((option) => option.textContent?.trim() === preferredLabel), found.querySelector("ytd-transcript-renderer") ? 3_000 : 0);
-        if (item && shownLabel() !== preferredLabel) {
-            item.click();
+    // The menu's items are in the page before the menu is opened, so one can be clicked directly.
+    const menuItem = (label) => label === undefined
+        ? undefined
+        : Array.from(found.querySelectorAll("ytd-transcript-footer-renderer yt-dropdown-menu a")).find((option) => option.textContent?.trim() === label);
+    // Lines keep arriving after the first ones render. Wait until there are some and the count holds still.
+    const linesOnceSteady = async (ms) => {
+        let count = -1;
+        const deadline = Date.now() + ms;
+        for (let steady = 0; steady < 3 && Date.now() < deadline; await pause(250)) {
+            const now = found.querySelectorAll(SEGMENT).length;
+            steady = now > 0 && now === count ? steady + 1 : 0;
+            count = now;
+        }
+        return count;
+    };
+    if (preferredLabel && found.querySelector("ytd-transcript-renderer")) {
+        const wanted = await until(() => menuItem(preferredLabel), 3_000);
+        if (wanted && shownLabel() !== preferredLabel) {
+            wanted.click();
             await until(() => shownLabel() === preferredLabel, 8_000);
         }
     }
-    // Lines keep arriving after the first ones render. Wait until there are some and the count holds still.
-    let count = -1;
-    const deadline = Date.now() + 12_000;
-    for (let steady = 0; steady < 3 && Date.now() < deadline; await pause(250)) {
-        const now = found.querySelectorAll(SEGMENT).length;
-        steady = now > 0 && now === count ? steady + 1 : 0;
-        count = now;
+    let lines = await linesOnceSteady(12_000);
+    if (lines <= 0) {
+        // YouTube's own request failed and left the panel empty. Clicking a language — even the one
+        // already chosen — makes YouTube ask again. Closing and reopening the panel does not.
+        const again = menuItem(preferredLabel) ?? menuItem(shownLabel());
+        if (again) {
+            again.click();
+            lines = await linesOnceSteady(12_000);
+        }
     }
-    if (count <= 0) {
-        // YouTube's own request failed and left the panel empty. Close it, so that asking again makes a new request.
+    if (lines <= 0) {
         close();
         return { failure: "no-segments" };
     }

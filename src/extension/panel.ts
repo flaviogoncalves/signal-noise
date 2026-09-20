@@ -209,7 +209,7 @@ document.querySelectorAll<HTMLInputElement>('input[name="mode"]').forEach((radio
 });
 
 languageSelect.append(
-  new Option(`Browser language (${outputLanguage(AUTO, navigator.language)})`, AUTO),
+  new Option(`Auto — ${outputLanguage(AUTO, navigator.language)}`, AUTO),
   ...LANGUAGES.map((language) => new Option(language.label, language.value)),
   new Option("Same as the video", SOURCE),
 );

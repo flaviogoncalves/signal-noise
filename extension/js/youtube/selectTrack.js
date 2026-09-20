@@ -1,3 +1,5 @@
+/** Whether two language codes name the same language: `en-US` and `en` do. Pure. */
+export const sameLanguage = (a, b) => a.split("-")[0].toLowerCase() === b.split("-")[0].toLowerCase();
 /**
  * Pick the track most faithful to what was actually said.
  *
@@ -8,7 +10,7 @@
 export function selectTrack(tracks, originalLanguage) {
     if (tracks.length === 0)
         return undefined;
-    const isOriginal = (t) => originalLanguage === undefined || t.languageCode === originalLanguage;
+    const isOriginal = (t) => originalLanguage === undefined || sameLanguage(t.languageCode, originalLanguage);
     const isHumanWritten = (t) => t.kind !== "asr";
     const preferred = tracks.find((t) => isOriginal(t) && isHumanWritten(t)) ?? tracks.find(isOriginal);
     if (preferred)

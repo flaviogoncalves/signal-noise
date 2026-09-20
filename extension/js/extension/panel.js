@@ -185,6 +185,6 @@ document.querySelectorAll('input[name="mode"]').forEach((radio) => {
     radio.checked = radio.value === stored.mode;
     radio.addEventListener("change", () => saveMode(selectedMode()));
 });
-languageSelect.append(new Option(`Browser language (${outputLanguage(AUTO, navigator.language)})`, AUTO), ...LANGUAGES.map((language) => new Option(language.label, language.value)), new Option("Same as the video", SOURCE));
+languageSelect.append(new Option(`Auto — ${outputLanguage(AUTO, navigator.language)}`, AUTO), ...LANGUAGES.map((language) => new Option(language.label, language.value)), new Option("Same as the video", SOURCE));
 languageSelect.value = stored.language;
 languageSelect.addEventListener("change", () => saveLanguage(languageChoiceFrom(languageSelect.value)));

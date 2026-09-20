@@ -59,19 +59,12 @@ export async function harvest(tabId: number, videoId: string): Promise<FetchedEp
   if (!player) throw new NotPlayableError("YouTube's page did not describe this video. Reload the tab and try again.");
   assertCaptioned(player, videoId);
 
-  // YouTube's own request for the transcript fails now and then, leaving its panel open and
-  // empty. Asking once more is what a viewer would do, and it is the whole retry policy.
   // The same preference as ever — human-written in the original language, then auto-generated —
   // expressed the only way the page understands it: the track's name in the language menu.
   const wanted = selectTrack(captionTracksOf(player), originalLanguageOf(player))?.track.name?.simpleText;
   const label: [string?] = wanted ? [wanted] : [];
 
-  let reading = await inPage(tabId, readTranscriptPanel, label);
-  if ("failure" in reading && reading.failure === "no-segments") {
-    console.info("YouTube's transcript panel stayed empty; asking once more.");
-    reading = await inPage(tabId, readTranscriptPanel, label);
-  }
-
+  const reading = await inPage(tabId, readTranscriptPanel, label);
   if ("failure" in reading) {
     throw new TrackUnavailableError(
       reading.failure === "no-button"

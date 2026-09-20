@@ -8,6 +8,10 @@ export interface CaptionTrack {
   name?: { simpleText?: string };
 }
 
+/** Whether two language codes name the same language: `en-US` and `en` do. Pure. */
+export const sameLanguage = (a: string, b: string): boolean =>
+  a.split("-")[0]!.toLowerCase() === b.split("-")[0]!.toLowerCase();
+
 export interface TrackChoice {
   track: CaptionTrack;
   /** Set only when the chosen track is a compromise worth telling the user about. */
@@ -28,7 +32,7 @@ export function selectTrack(
   if (tracks.length === 0) return undefined;
 
   const isOriginal = (t: CaptionTrack): boolean =>
-    originalLanguage === undefined || t.languageCode === originalLanguage;
+    originalLanguage === undefined || sameLanguage(t.languageCode, originalLanguage);
   const isHumanWritten = (t: CaptionTrack): boolean => t.kind !== "asr";
 
   const preferred =

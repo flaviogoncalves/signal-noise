@@ -98,6 +98,31 @@ describe("originalLanguageOf", () => {
   it("admits it does not know when nothing says", () => {
     expect(originalLanguageOf(video([track("ar", "Arabic"), track("en", "English")]))).toBeUndefined();
   });
+
+  describe("on a video YouTube has dubbed by machine", () => {
+    // What YouTube really served for one interview: an auto-generated track per dub, the original not first.
+    const perDub = [track("de-DE", "German", "asr"), track("ar", "Arabic", "asr"), track("en", "English", "asr"), track("pt-BR", "Portuguese", "asr")];
+    const dubbed = (tracks: CaptionTrack[]): PlayerResponse => {
+      const payload = video(tracks);
+      payload.captions!.playerCaptionsTracklistRenderer!.audioTracks = ["de-DE.10", "ar.10", "en-US.4", "pt-BR.10"].map((audioTrackId) => ({ audioTrackId }));
+      return payload;
+    };
+
+    it("finds the one audio track that is not a dub", () => {
+      expect(originalLanguageOf(dubbed(perDub))).toBe("en-US");
+    });
+
+    it("so the English captions of an English interview are not called a translation of German", () => {
+      const result = episodeFromPanel(dubbed(perDub), { ...spoken("30:00"), trackLabel: "English" }, "x");
+      expect(result.warning).toBeUndefined();
+      expect(result.trackLanguage).toBe("en");
+      expect(selectTrack(perDub, originalLanguageOf(dubbed(perDub)))?.track.languageCode).toBe("en");
+    });
+
+    it("does not take the first auto-generated track's word for it when they disagree", () => {
+      expect(originalLanguageOf(video(perDub))).toBeUndefined();
+    });
+  });
 });
 
 describe("assertCaptioned", () => {

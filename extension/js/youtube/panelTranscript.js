@@ -1,5 +1,6 @@
 import { NoCaptionsError, TrackUnavailableError } from "./errors.js";
 import { captionTracksOf, describeEpisode, originalLanguageOf, } from "./playerResponse.js";
+import { sameLanguage } from "./selectTrack.js";
 /**
  * Pull `ytInitialPlayerResponse` out of a watch page. Pure.
  *
@@ -71,12 +72,12 @@ function compromises(payload, track, lastSpokenAt) {
         notes.push("YouTube chose which captions to show and does not say which. " +
             "If they are a translation, the summary was made from a translation.");
     }
-    else if (original && track.languageCode !== original) {
+    else if (original && !sameLanguage(track.languageCode, original)) {
         notes.push(`YouTube showed "${track.languageCode}" captions, but the audio is "${original}". ` +
             "This transcript is a translation and will be less accurate.");
     }
     else if (track.kind === "asr" &&
-        tracks.some((other) => other.kind !== "asr" && other.languageCode === track.languageCode)) {
+        tracks.some((other) => other.kind !== "asr" && sameLanguage(other.languageCode, track.languageCode))) {
         notes.push("YouTube showed its auto-generated captions although human-written ones exist for this video, " +
             "so expect more transcription errors.");
     }
