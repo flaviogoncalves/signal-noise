@@ -98,14 +98,13 @@ Stores three values locally on the user's device (chrome.storage.local, never sy
 The "Copy transcript" and "Copy summary" buttons place text on the user's clipboard at the user's request. The copy happens after the transcript has been fetched, which can take a few seconds after the click, so the permission is needed for the write to succeed reliably. The extension never reads the clipboard.
 ```
 
-Host permission `https://www.youtube.com/*`
+**Host permission justification** (the dashboard has one field for all hosts)
 ```
-The extension works only on YouTube video pages. This permission lets it read the transcript and video details of the video the user asks it to evaluate, and move that video's player to a timestamp the user clicks. It is not used on any other page of the site until the user clicks a button in the panel.
-```
+The extension needs two hosts, and uses each for one thing.
 
-Host permission `https://api.sippulse.ai/*`
-```
-This is the AI service that produces the evaluation. When the user clicks "Evaluate this video", the extension sends that video's transcript to this API, authenticated with the API key the user provided, and receives the summary. It is the only external service the extension contacts.
+https://www.youtube.com/* — The extension works only on YouTube video pages. When the user clicks "Evaluate this video" or "Copy transcript", it reads the details of the video open in that tab (title, length, description, caption list), opens YouTube's built-in "Show transcript" panel and reads the transcript it displays, and moves the player to a timestamp the user clicks in the summary. Nothing is read until the user clicks a button in the panel.
+
+https://api.sippulse.ai/* — This is the AI service that produces the evaluation. When the user clicks "Evaluate this video", the extension sends that one video's transcript to this API, authenticated with the API key the user entered, and receives the summary. It is the only external service the extension contacts. No other host is accessed.
 ```
 
 **Are you using remote code?** No. All code is in the package; the text returned by the AI service is displayed as escaped text and is never executed.
