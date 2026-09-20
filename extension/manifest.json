@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Signal / Noise",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Tells you whether a YouTube video is worth your time: what is new in it, what it changes, and which chapters to skip.",
   "minimum_chrome_version": "116",
   "icons": {

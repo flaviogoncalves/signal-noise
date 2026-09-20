@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  ModelUnavailableError,
   createStreamParser,
   explainFailure,
   readWholeCompletion,
@@ -40,15 +41,24 @@ describe("resolveModel", () => {
     );
   });
 
-  it("refuses rather than using an older Flash, and says which DeepSeek models it saw", () => {
-    expect(() => resolveModel(["gpt-4o", "deepseek-v4-flash", "deepseek-r1"])).toThrow(
-      /cannot use DeepSeek 4\.1 Flash.*deepseek-v4-flash, deepseek-r1\.$/,
-    );
+  it("refuses rather than using an older Flash", () => {
+    expect(() => resolveModel(["gpt-4o", "deepseek-v4-flash", "deepseek-r1"])).toThrow(ModelUnavailableError);
+    expect(() => resolveModel([])).toThrow(ModelUnavailableError);
   });
 
-  it("lists whatever the key has when it has no DeepSeek model at all", () => {
-    expect(() => resolveModel(["gpt-4o"])).toThrow(/gpt-4o/);
-    expect(() => resolveModel([])).toThrow(/none/);
+  it("never names a model to the user, and keeps what it saw for whoever is debugging", () => {
+    const ids = ["gpt-4o", "deepseek-v4-flash"];
+    const refusal = (() => {
+      try {
+        return resolveModel(ids);
+      } catch (error) {
+        return error as ModelUnavailableError;
+      }
+    })();
+
+    expect(refusal).toBeInstanceOf(ModelUnavailableError);
+    expect((refusal as ModelUnavailableError).message).not.toMatch(/deepseek|flash|gpt|4\.1/i);
+    expect((refusal as ModelUnavailableError).seen).toEqual(ids);
   });
 });
 

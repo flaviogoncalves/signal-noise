@@ -9,26 +9,25 @@ declare const chrome: any;
  */
 export interface Settings {
   apiKey?: string;
-  /** The model the key last resolved to. For display: it is resolved again on every evaluation. */
-  model?: string;
   mode: Mode;
   language: LanguageChoice;
 }
 
 export async function loadSettings(): Promise<Settings> {
-  const stored = await chrome.storage.local.get(["sippulseKey", "sippulseModel", "mode", "language"]);
+  const stored = await chrome.storage.local.get(["sippulseKey", "mode", "language"]);
   return {
     ...(typeof stored.sippulseKey === "string" ? { apiKey: stored.sippulseKey } : {}),
-    ...(typeof stored.sippulseModel === "string" ? { model: stored.sippulseModel } : {}),
     mode: stored.mode === "fast" ? "fast" : "complete",
     language: languageChoiceFrom(stored.language),
   };
 }
 
-export const saveKey = (apiKey: string, model: string): Promise<void> =>
-  chrome.storage.local.set({ sippulseKey: apiKey, sippulseModel: model });
-
-export const saveModel = (model: string): Promise<void> => chrome.storage.local.set({ sippulseModel: model });
+// `sippulseModel` was written by 0.4.0 and 0.4.1, which displayed the model's id. Nothing
+// reads it now, so saving or removing a key clears what an upgraded install still holds.
+export const saveKey = async (apiKey: string): Promise<void> => {
+  await chrome.storage.local.set({ sippulseKey: apiKey });
+  await chrome.storage.local.remove("sippulseModel");
+};
 
 export const removeKey = (): Promise<void> => chrome.storage.local.remove(["sippulseKey", "sippulseModel"]);
 

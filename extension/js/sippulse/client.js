@@ -6,6 +6,21 @@ export class SipPulseError extends Error {
         this.name = "SipPulseError";
     }
 }
+/**
+ * The key works, but its account cannot use the model the extension runs on.
+ *
+ * The message names no model, because the interface never does. What the key
+ * could see travels on the error instead, for whoever is debugging with the console open.
+ */
+export class ModelUnavailableError extends SipPulseError {
+    seen;
+    constructor(seen) {
+        super("This key cannot use the model Signal / Noise runs on. " +
+            "Ask SipPulse AI support to enable it for your account.");
+        this.seen = seen;
+        this.name = "ModelUnavailableError";
+    }
+}
 /** A date stamped into a model id — `2024-11`, `20250115` — which is not a version. */
 const DATE_STAMP = /(?<!\d)(?:20\d{2}[-_.]?\d{2}(?:[-_.]?\d{2})?)(?!\d)/g;
 /** "4.1" as a version: `4.1`, `4-1`, `4_1` or `v41`, and never the start of `4.10`. */
@@ -26,9 +41,7 @@ export function resolveModel(ids) {
         .sort((a, b) => a.length - b.length || a.localeCompare(b));
     if (chosen)
         return chosen;
-    const deepseek = ids.filter((id) => /deepseek/i.test(id));
-    const seen = (deepseek.length ? deepseek : ids).slice(0, 8).join(", ") || "none";
-    throw new SipPulseError(`This key cannot use DeepSeek 4.1 Flash. Models it can use: ${seen}.`);
+    throw new ModelUnavailableError(ids);
 }
 /**
  * Accumulate a streamed completion. No I/O — fed text, returns text.

@@ -2,13 +2,19 @@ import { formatForClipboard } from "../format/formatForClipboard.js";
 import { renderMarkdown } from "../format/renderMarkdown.js";
 import { buildMessages, type Mode } from "../skill/buildPrompt.js";
 import { AUTO, LANGUAGES, languageChoiceFrom, outputLanguage, SOURCE } from "../skill/language.js";
-import { listModels, resolveModel, streamCompletion, SipPulseError } from "../sippulse/client.js";
+import {
+  listModels,
+  ModelUnavailableError,
+  resolveModel,
+  streamCompletion,
+  SipPulseError,
+} from "../sippulse/client.js";
 import { EpisodeError, type FetchedEpisode } from "../youtube/fetchEpisode.js";
 import { seekTargetFrom } from "../youtube/seekTarget.js";
 import { activeVideo, harvest, isStillWatching, seek, type OpenVideo } from "./harvest.js";
 import { setUpKeyForm } from "./keyForm.js";
 import { say, type Tone } from "./say.js";
-import { loadSettings, saveLanguage, saveMode, saveModel } from "./settings.js";
+import { loadSettings, saveLanguage, saveMode } from "./settings.js";
 
 declare const chrome: any;
 
@@ -31,6 +37,7 @@ let running: AbortController | undefined;
 const report = (message: string, tone: Tone): void => say($("status"), message, tone);
 
 function reportFailure(error: unknown): void {
+  if (error instanceof ModelUnavailableError) console.info("Models this key can use:", error.seen);
   if (error instanceof EpisodeError || error instanceof SipPulseError) {
     report(error.message, "bad");
   } else {
@@ -72,22 +79,16 @@ async function videoOrExplain(): Promise<OpenVideo | undefined> {
 }
 
 /**
- * Resolve the model again rather than trusting the stored id: a catalog that
- * renamed or dropped it would otherwise fail every evaluation with an error
- * that never says "save your key again".
+ * Resolve the model on every evaluation rather than storing its id: a catalog
+ * that renamed or dropped it would otherwise fail every evaluation with an
+ * error that never says "save your key again".
  */
-async function currentModel(apiKey: string, storedModel: string | undefined): Promise<string> {
-  const model = resolveModel(await listModels(apiKey));
-  if (model !== storedModel) await saveModel(model);
-  return model;
-}
+const currentModel = async (apiKey: string): Promise<string> => resolveModel(await listModels(apiKey));
 
 // Loaded before any button is wired, so no click can arrive ahead of the settings.
 const stored = await loadSettings();
 
-const keyForm = setUpKeyForm(stored, (model) =>
-  report(`Key saved — using ${model}. Open a YouTube video and click Evaluate.`, "good"),
-);
+const keyForm = setUpKeyForm(stored, () => report("Key saved. Open a YouTube video and click Evaluate.", "good"));
 
 copyTranscriptButton.addEventListener("click", async () => {
   copyTranscriptButton.disabled = true;
@@ -131,7 +132,7 @@ evaluateButton.addEventListener("click", async () => {
     const video = await videoOrExplain();
     if (!video) return;
 
-    const [fetched, model] = await Promise.all([harvestOnce(video), currentModel(settings.apiKey, settings.model)]);
+    const [fetched, model] = await Promise.all([harvestOnce(video), currentModel(settings.apiKey)]);
     const transcript = formatForClipboard(fetched.episode);
     const skill = await (await fetch(chrome.runtime.getURL("skill/SKILL.md"))).text();
 
@@ -163,7 +164,7 @@ evaluateButton.addEventListener("click", async () => {
     } else if (finishReason === "length") {
       report(`The model ran out of room and the summary is cut off. ${trade}.`, "bad");
     } else {
-      report(`Done — ${trade} · ${model}`, "good");
+      report(`Done — ${trade}.`, "good");
     }
   } catch (error) {
     if (stop.signal.aborted) report("Stopped.", "idle");

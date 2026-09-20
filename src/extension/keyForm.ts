@@ -1,4 +1,4 @@
-import { listModels, resolveModel, SipPulseError } from "../sippulse/client.js";
+import { listModels, ModelUnavailableError, resolveModel, SipPulseError } from "../sippulse/client.js";
 import { say } from "./say.js";
 import { removeKey, saveKey, type Settings } from "./settings.js";
 
@@ -8,7 +8,7 @@ const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) 
  * The Settings section: the one thing the user configures.
  * Returns a way for the rest of the panel to send the user here when a key is missing.
  */
-export function setUpKeyForm(stored: Settings, onSaved: (model: string) => void): { askForKey(): void } {
+export function setUpKeyForm(stored: Settings, onSaved: () => void): { askForKey(): void } {
   const section = $<HTMLDetailsElement>("settings");
   const input = $<HTMLInputElement>("key");
   const saveButton = $<HTMLButtonElement>("save-key");
@@ -31,14 +31,15 @@ export function setUpKeyForm(stored: Settings, onSaved: (model: string) => void)
     say(status, "Checking the key…", "busy");
 
     try {
-      // Listing the models proves the key works and finds the model in one request.
-      const model = resolveModel(await listModels(key));
-      await saveKey(key, model);
-      say(status, `Key saved. Using ${model}.`, "good");
+      // Listing the models proves, in one request, that the key works and can run an evaluation.
+      resolveModel(await listModels(key));
+      await saveKey(key);
+      say(status, "Key saved.", "good");
       removeButton.hidden = false;
       section.open = false;
-      onSaved(model);
+      onSaved();
     } catch (error) {
+      if (error instanceof ModelUnavailableError) console.info("Models this key can use:", error.seen);
       // The key that was already saved, if any, is left alone.
       say(status, error instanceof SipPulseError ? error.message : `Could not reach SipPulse AI: ${String(error)}`, "bad");
     } finally {
@@ -56,7 +57,6 @@ export function setUpKeyForm(stored: Settings, onSaved: (model: string) => void)
   if (stored.apiKey) {
     input.value = stored.apiKey;
     removeButton.hidden = false;
-    if (stored.model) say(status, `Using ${stored.model}.`, "idle");
   } else {
     section.open = true;
   }

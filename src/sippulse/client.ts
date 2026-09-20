@@ -8,6 +8,22 @@ export class SipPulseError extends Error {
   }
 }
 
+/**
+ * The key works, but its account cannot use the model the extension runs on.
+ *
+ * The message names no model, because the interface never does. What the key
+ * could see travels on the error instead, for whoever is debugging with the console open.
+ */
+export class ModelUnavailableError extends SipPulseError {
+  constructor(readonly seen: string[]) {
+    super(
+      "This key cannot use the model Signal / Noise runs on. " +
+        "Ask SipPulse AI support to enable it for your account.",
+    );
+    this.name = "ModelUnavailableError";
+  }
+}
+
 export interface ChatMessage {
   role: "system" | "user";
   content: string;
@@ -36,9 +52,7 @@ export function resolveModel(ids: string[]): string {
     .sort((a, b) => a.length - b.length || a.localeCompare(b));
   if (chosen) return chosen;
 
-  const deepseek = ids.filter((id) => /deepseek/i.test(id));
-  const seen = (deepseek.length ? deepseek : ids).slice(0, 8).join(", ") || "none";
-  throw new SipPulseError(`This key cannot use DeepSeek 4.1 Flash. Models it can use: ${seen}.`);
+  throw new ModelUnavailableError(ids);
 }
 
 export interface StreamParser {
