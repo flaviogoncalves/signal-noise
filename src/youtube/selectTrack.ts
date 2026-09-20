@@ -4,6 +4,8 @@ export interface CaptionTrack {
   /** Present and equal to "asr" when auto-generated. */
   kind?: string;
   baseUrl: string;
+  /** The track's name as YouTube shows it, in the viewer's interface language. */
+  name?: { simpleText?: string };
 }
 
 export interface TrackChoice {

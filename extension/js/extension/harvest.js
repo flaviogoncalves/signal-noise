@@ -1,29 +1,16 @@
-import { fetchEpisodeWith } from "../youtube/fetchEpisode.js";
+import { NotPlayableError, TrackUnavailableError } from "../youtube/errors.js";
+import { assertCaptioned, episodeFromPanel, parseWatchHtml } from "../youtube/panelTranscript.js";
+import { captionTracksOf, originalLanguageOf } from "../youtube/playerResponse.js";
+import { selectTrack } from "../youtube/selectTrack.js";
 import { videoIdFrom } from "../youtube/videoId.js";
-/**
- * Fetch from inside the page rather than from the extension.
- *
- * An extension fetch is cross-origin: it carries `Origin: chrome-extension://…` and
- * the user's YouTube cookies, so YouTube sees a logged-in WEB session claiming
- * to be the Android client and answers 403. Running the same request in the
- * page makes it same-origin and it succeeds. The request itself is passed in,
- * so the client identity lives in exactly one place.
- */
-function pageFetcher(tabId) {
-    return async (url, init) => {
-        const [injection] = await chrome.scripting.executeScript({
-            target: { tabId },
-            world: "MAIN",
-            args: [url, init],
-            func: async (target, options) => {
-                const response = await fetch(target, options);
-                return { ok: response.ok, status: response.status, body: await response.text() };
-            },
-        });
-        if (!injection?.result)
-            throw new Error("The page did not respond. Try reloading the tab.");
-        return injection.result;
-    };
+import { fetchWatchHtml, readTranscriptPanel } from "./readPage.js";
+/** Run a self-contained function inside the tab, in the extension's isolated world. */
+async function inPage(tabId, func, args) {
+    const [injection] = await chrome.scripting.executeScript({ target: { tabId }, func, args });
+    if (injection?.result === undefined || injection.result === null) {
+        throw new Error("The page did not respond. Try reloading the tab.");
+    }
+    return injection.result;
 }
 /** The video in the tab the user is looking at, if that tab is showing one. */
 export async function activeVideo() {
@@ -45,9 +32,35 @@ export async function isStillWatching(video) {
         return false;
     }
 }
-/** Harvest the episode playing in a tab. */
-export function harvest(tabId, videoId) {
-    return fetchEpisodeWith(pageFetcher(tabId), videoId);
+/**
+ * Harvest the episode playing in a tab, from what the page itself shows.
+ *
+ * The page's own data says whether there is anything to harvest, so an
+ * Uncaptioned Episode is refused before the page is touched. Only then is
+ * YouTube's transcript panel opened and read.
+ */
+export async function harvest(tabId, videoId) {
+    const player = parseWatchHtml(await inPage(tabId, fetchWatchHtml, [videoId]));
+    if (!player)
+        throw new NotPlayableError("YouTube's page did not describe this video. Reload the tab and try again.");
+    assertCaptioned(player, videoId);
+    // YouTube's own request for the transcript fails now and then, leaving its panel open and
+    // empty. Asking once more is what a viewer would do, and it is the whole retry policy.
+    // The same preference as ever — human-written in the original language, then auto-generated —
+    // expressed the only way the page understands it: the track's name in the language menu.
+    const wanted = selectTrack(captionTracksOf(player), originalLanguageOf(player))?.track.name?.simpleText;
+    const label = wanted ? [wanted] : [];
+    let reading = await inPage(tabId, readTranscriptPanel, label);
+    if ("failure" in reading && reading.failure === "no-segments") {
+        console.info("YouTube's transcript panel stayed empty; asking once more.");
+        reading = await inPage(tabId, readTranscriptPanel, label);
+    }
+    if ("failure" in reading) {
+        throw new TrackUnavailableError(reading.failure === "no-button"
+            ? "YouTube did not offer its transcript for this video, although it has captions. Reload the tab and try again."
+            : "YouTube opened its transcript panel but nothing loaded in it. The episode does have captions; try again.");
+    }
+    return episodeFromPanel(player, reading, videoId);
 }
 /** Move the player in a tab to a second, without reloading the page. */
 export async function seek(tabId, seconds) {

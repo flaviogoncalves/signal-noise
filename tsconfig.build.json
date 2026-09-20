@@ -5,6 +5,13 @@
     "outDir": "extension/js",
     "rootDir": "src"
   },
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts", "src/cli.ts"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/cli.ts",
+    "src/youtube/fetchEpisode.ts",
+    "src/youtube/parseTimedText.ts"
+  ]
 }

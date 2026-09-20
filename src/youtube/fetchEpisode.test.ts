@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { assertTrackBody, TrackUnavailableError } from "./fetchEpisode.js";
+import { TrackUnavailableError } from "./errors.js";
+import { assertTrackBody } from "./fetchEpisode.js";
 
 /** What YouTube serves when it is blocking caption downloads from a network. */
 const SORRY_PAGE =

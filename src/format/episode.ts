@@ -7,6 +7,8 @@ export interface Chapter {
 /** One caption fragment as delivered by a Transcript Source. */
 export interface Segment {
   text: string;
+  /** When the fragment is spoken, for a Transcript Source that knows. */
+  startSeconds?: number;
 }
 
 /**

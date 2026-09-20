@@ -8,7 +8,7 @@ Turn a YouTube video into a decision about whether to watch it.
 
 Signal / Noise is a Chrome extension. Open a video, click one button, and a side panel beside the player answers one question — **is this worth 31 minutes, and if not, which 90 seconds are?** — with a verdict, what is actually new, and the chapters to skip. Click a timestamp in the answer and the video jumps there.
 
-It reads the captions the video already has, which takes about a second, and judges them with AI running on [SipPulse AI](https://sippulse.ai). The only thing you set up is a SipPulse AI key — free to get, and it comes with a US$5 credit, enough to evaluate a good number of videos before you pay anything.
+It reads the transcript YouTube already has for the video, which takes a few seconds, and judges them with AI running on [SipPulse AI](https://sippulse.ai). The only thing you set up is a SipPulse AI key — free to get, and it comes with a US$5 credit, enough to evaluate a good number of videos before you pay anything.
 
 **[Install it in 5 minutes ↓](#install-it-in-5-minutes)** — no programming knowledge needed.
 
@@ -118,7 +118,8 @@ The extension asks for four permissions — `sidePanel`, `scripting`, `storage`,
 - **"The SipPulse AI organization is out of credits"** — the US$5 starter credit has been used up. Add credit inside SipPulse AI and click **Evaluate this video** again; nothing needs changing in the extension.
 - **The summary says it was cut off** — the model hit its output limit. Try Fast.
 - **"This episode has no captions"** — also expected, and not a bug. Signal / Noise reads transcripts that already exist; it never generates them. See [ADR 0002](./docs/adr/0002-harvest-only-never-transcribe.md).
-- **It stopped working after a YouTube change** — possible; this is unofficial and uses no documented API. See [Reliability](#reliability).
+- **"YouTube did not offer its transcript for this video"** or **"…nothing loaded in it"** — YouTube's own transcript panel failed to open or came up empty. Reload the YouTube tab and click **Evaluate this video** again. If it keeps happening on every video, YouTube has probably changed its page; see [Reliability](#reliability).
+- **A note under the status about captions** — for example that YouTube does not say which captions it showed, or that they are auto-generated. It is information, not an error: the evaluation still ran, on the transcript YouTube provided.
 - **You edited the source code** — run `npm run build`, then click the circular arrow on the extension card in `chrome://extensions`.
 
 </details>
@@ -139,9 +140,11 @@ These rules are not buried in code. They are one readable file, [`skills/signal-
 
 ## Reliability
 
-This is unofficial. It uses no documented API, and it can stop working without notice if YouTube changes how captions are served. There is no server, no browser automation and no headless Chrome involved — a request goes out and a transcript comes back, typically in about a second.
+The extension gets the transcript the way you would: it opens YouTube's own **Show transcript** panel on the page, picks the caption language, reads what YouTube shows, and closes the panel again. You may see that panel flicker open for a moment. It asks YouTube for nothing the page would not ask for itself — see [ADR 0007](./docs/adr/0007-the-extension-reads-the-transcript-youtube-shows.md).
 
-The code is here if you want to know more: the network layer is [`src/youtube/fetchEpisode.ts`](./src/youtube/fetchEpisode.ts).
+That makes it dependent on how YouTube builds its page, which changes without notice; when it does, the extension can stop working until it is updated. There is no server involved and no video is ever played. A transcript that stops well short of the video's length is reported as incomplete, never passed off as whole.
+
+The command-line tool gets transcripts a different, faster way — [`src/youtube/fetchEpisode.ts`](./src/youtube/fetchEpisode.ts), explained in [ADR 0003](./docs/adr/0003-android-client-to-reach-caption-tracks.md) — which is not part of the extension.
 
 ## Scope
 
@@ -149,7 +152,7 @@ The code is here if you want to know more: the network layer is [`src/youtube/fe
 
 - Evaluate the open YouTube video in a side panel, Complete or Fast, in the language you choose
 - Fetch the existing transcript for any YouTube video, headless, in batch
-- Prefer human-written captions in the original language; never silently hand you a translation
+- Prefer human-written captions in the language being spoken, and say so plainly whenever what YouTube showed is auto-generated, a translation, or of unknown origin
 - Refuse plainly when an episode has no captions
 
 **Deliberately does not:**
@@ -181,12 +184,12 @@ It is called `yttranscribe`, a mild misnomer kept because it is short: it harves
 ## Development
 
 ```bash
-npm test          # 80 tests
+npm test          # 102 tests
 npm run typecheck
 npm run build     # CLI to dist/, extension to extension/js/
 ```
 
-Pure logic is tested — caption parsing, track selection, chapter parsing, URL parsing, formatting, prompt assembly, stream parsing, model resolution, and the Markdown renderer's escaping. `fetchEpisode` is a thin network adapter over a third-party API that changes without notice, so it is verified by running it rather than by fixtures that would give false confidence.
+Pure logic is tested — caption parsing, reading the watch page and the transcript panel's lines, track selection, chapter parsing, URL parsing, formatting, prompt assembly, stream parsing, model resolution, and the Markdown renderer's escaping. `fetchEpisode` and the code injected into the YouTube page (`src/extension/readPage.ts`) are thin adapters over a third party that changes without notice, so they are verified by running them rather than by fixtures that would give false confidence.
 
 `extension/js/` is generated from `src/`, and `extension/skill/SKILL.md` is copied from `skills/`; both are committed, so the extension can be loaded without a build step. Rebuild with `npm run build` after editing `src/` **or the skill** — the extension runs the copy, not the original.
 
@@ -195,7 +198,7 @@ The icons in `extension/icons/` are PNGs rendered from two SVGs — `icon-small.
 ## Docs
 
 - [CONTEXT.md](./CONTEXT.md) — glossary
-- [docs/adr/](./docs/adr/) — decisions: [0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md), why the extension now evaluates; [0005](./docs/adr/0005-the-skill-file-is-the-prompt.md), why the rules file itself is the prompt; [0006](./docs/adr/0006-a-side-panel-not-a-popup.md), why a side panel; and [0001](./docs/adr/0001-browser-extension-because-sabr-killed-server-side-captions.md), kept as a record of a wrong turn
+- [docs/adr/](./docs/adr/) — decisions: [0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md), why the extension now evaluates; [0005](./docs/adr/0005-the-skill-file-is-the-prompt.md), why the rules file itself is the prompt; [0006](./docs/adr/0006-a-side-panel-not-a-popup.md), why a side panel; [0007](./docs/adr/0007-the-extension-reads-the-transcript-youtube-shows.md), why the extension reads YouTube's own transcript panel; and [0001](./docs/adr/0001-browser-extension-because-sabr-killed-server-side-captions.md), kept as a record of a wrong turn
 - [docs/spec/](./docs/spec/) — the original spec, now largely overtaken
 
 ## License
