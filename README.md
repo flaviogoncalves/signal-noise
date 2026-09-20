@@ -8,7 +8,9 @@ Turn a YouTube video into a decision about whether to watch it.
 
 Signal / Noise is a Chrome extension. Open a video, click one button, and a side panel beside the player answers one question — **is this worth 31 minutes, and if not, which 90 seconds are?** — with a verdict, what is actually new, and the chapters to skip. Click a timestamp in the answer and the video jumps there.
 
-It reads the captions the video already has, which takes about a second, and judges them with DeepSeek 4.1 Flash on [SipPulse AI](https://sippulse.ai). The only thing you configure is a SipPulse AI key. Nothing else to install, no account with anyone else, no pasting into a chat.
+It reads the captions the video already has, which takes about a second, and judges them with AI running on [SipPulse AI](https://sippulse.ai). The only thing you set up is a SipPulse AI key — free to get, and it comes with a US$5 credit, enough to evaluate a good number of videos before you pay anything.
+
+**[Install it in 5 minutes ↓](#install-it-in-5-minutes)** — no programming knowledge needed.
 
 Signal / Noise is the first *app da quinzena* — app of the fortnight — built on SipPulse AI.
 
@@ -37,25 +39,65 @@ See [`examples/`](./examples/) for [the input shape](./examples/input-transcript
 
 Note what happened to `17:20`. It is the most quotable chapter in the video, and it is in the skip list — because the speaker says "I don't know" and offers no data. That is the entire point.
 
-## Install the extension
+## Install it in 5 minutes
 
-No build step, no Web Store. About a minute, plus a SipPulse AI key.
+You do not need to know anything about programming. There are three parts: get a free key, put the extension in Chrome, and use it.
 
-1. **Download the code.** Either `git clone https://github.com/flaviogoncalves/signal-noise.git`, or use **Code → Download ZIP** on this page and unzip it.
-2. Open Chrome and go to **`chrome://extensions`** (type it in the address bar — it is not in the menus).
-3. Turn on **Developer mode** with the toggle in the **top-right** corner. Nothing appears to happen; this just reveals the buttons in step 4.
-4. Click **Load unpacked** (top-left).
-5. In the folder picker, select the **`extension/`** folder inside the code you downloaded — **not** the top folder. You should be selecting the folder that directly contains `manifest.json`.
-6. "Signal / Noise" now appears in your extension list. Click the puzzle-piece icon in the Chrome toolbar and **pin** it so the button is always visible.
-7. Click the button. A side panel opens with **Settings** already unfolded: paste your [SipPulse AI](https://sippulse.ai) key and click **Save key**. The key is checked on the spot, and the panel tells you which model it will use. That is the only configuration there is.
+You need **Google Chrome on a computer** — Windows, Mac or Linux. It does not work on a phone or tablet.
 
-**Using it:** open any YouTube video, click the button, click **Evaluate this video**. The summary streams into the panel beside the player. Click any chapter anchor in it and the video jumps there — no reload, no new tab.
+### Part 1 — Get your free key (2 minutes)
+
+The key is what lets the extension use SipPulse AI. A new account comes with a **US$5 credit**, so you can evaluate a good number of videos before paying anything.
+
+1. Open **[sippulse.ai/register](https://sippulse.ai/register)**.
+2. Sign up with **Google**, **Microsoft**, or your **email**. If you use email, a 6-digit code arrives in your inbox — type it in within 10 minutes.
+3. Fill in the short form: your name, an organization name (type anything — your own name is fine), language, currency and phone.
+   **Pick the currency carefully. It cannot be changed afterwards.**
+4. You are now inside SipPulse AI, and the credit is already in your account. In the menu on the left, click **API Keys**.
+5. Click the **Generate API Key** button.
+6. Type a name for it, for example `Signal Noise`, and click **Create**.
+7. Your key appears on the screen. **Copy it now and keep this tab open** — it is shown in full only this one time. (If you lose it, no harm done: delete it and generate another.)
+
+### Part 2 — Put the extension in Chrome (2 minutes)
+
+1. **Download it.** Click **[Download Signal / Noise (ZIP)](https://github.com/flaviogoncalves/signal-noise/archive/refs/heads/main.zip)**. A file named `signal-noise-main.zip` goes to your **Downloads** folder.
+2. **Unzip it.**
+   - **Windows:** right-click the file, choose **Extract All…**, then click **Extract**.
+   - **Mac:** double-click the file.
+
+   You now have a folder named `signal-noise-main`.
+3. **Move that folder somewhere it can stay**, such as **Documents**. Chrome runs the extension from this folder: if you delete or move it later, the extension stops working.
+4. Open Chrome, click the address bar at the top, type **`chrome://extensions`** and press **Enter**. (You have to type or paste it — Chrome does not allow it to be a clickable link.)
+5. In the **top-right** corner of that page, switch on **Developer mode**. A row of buttons appears at the top-left.
+6. Click **Load unpacked**.
+7. A window opens for you to choose a folder. Open `signal-noise-main`, click **once** on the folder called **`extension`** to highlight it, and click **Select Folder** (on a Mac: **Select**).
+   Choose the `extension` folder *inside* — not `signal-noise-main` itself.
+8. A card named **Signal / Noise** appears on the page. It is installed.
+9. **Pin it so you can find it.** Click the **puzzle-piece icon** near the top-right corner of Chrome, find **Signal / Noise** in the list, and click the **pin** next to it. The icon — one green bar among grey ones — now stays in your toolbar.
+
+> When Chrome starts, it may show a warning about "developer mode extensions". That is Chrome's standard notice for any extension installed this way rather than from the Web Store. Dismiss it; the extension keeps working.
+
+### Part 3 — Paste your key and evaluate a video (1 minute)
+
+1. Click the **Signal / Noise icon** in the toolbar. A panel opens on the right side of Chrome, with **Settings** already open.
+2. Paste your key into the **SipPulse AI key** box and click **Save key**. The panel confirms with **Key saved**. You only do this once.
+3. Open any video on **YouTube**.
+4. Click **Evaluate this video**. Within a few seconds the verdict starts appearing in the panel, next to the video.
+5. Click any **blue timestamp** in the summary and the video jumps to that moment.
+
+That is all. From now on it is steps 3 to 5: open a video, click the icon, click **Evaluate this video**.
+
+### Updating to a new version
+
+Download the ZIP again, unzip it, and replace the old `signal-noise-main` folder with the new one, in the same place. Then open `chrome://extensions` and click the **circular arrow** on the Signal / Noise card. Your key and preferences are kept.
+
+## Using it
 
 <p align="center">
   <img src="./docs/images/panel.png" alt="The Signal / Noise side panel: a Complete/Fast switch, an output language menu, an 'Evaluate this video' button, and a streamed summary with a verdict and clickable chapter anchors." width="380">
 </p>
 
-Two parameters sit above the button, and both are remembered:
+Two choices sit above the **Evaluate this video** button, and both are remembered:
 
 - **Complete / Fast.** Complete is the full evaluation: verdict, what is new, thesis, signal, skip list, numbers, tensions. Fast keeps only the essential — verdict, what is new, at most five lines of signal — and ends with one line saying what Complete would add. Fast reports less; it does not read less. Both judge the whole transcript by the same rules.
 - **Output language.** Your browser's language by default, a language you pick, or "same as the video". Chapter titles, quotes and technical terms stay in the original either way, so anchors still match what YouTube shows you.
@@ -67,14 +109,17 @@ The extension asks for four permissions — `sidePanel`, `scripting`, `storage`,
 <details>
 <summary><strong>If it does not work</strong></summary>
 
-- **"Manifest file is missing or unreadable"** — you selected the wrong folder in step 5. Select `extension/`, the one containing `manifest.json`.
+- **"Manifest file is missing or unreadable"** — in Part 2, step 7, the wrong folder was selected. Click **Load unpacked** again and choose the folder called `extension` that is *inside* `signal-noise-main`.
+- **The Signal / Noise card has disappeared, or shows an error** — the `signal-noise-main` folder was moved or deleted. Put it back, or repeat Part 2 from step 6.
+- **Clicking the icon does nothing** — make sure Chrome is up to date (**⋮ menu → Help → About Google Chrome**); the side panel needs Chrome 116 or newer.
 - **"Open a YouTube video first"** — expected on any other page. It only acts on `youtube.com/watch` pages.
 - **"SipPulse AI rejected the key"** — open **Settings** at the top of the panel and save the key again; saving re-checks it. **Remove key**, next to it, deletes the key from the browser.
-- **"This key cannot use DeepSeek 4.1 Flash"** — the key works, but its organization cannot use the model the extension runs on. The message lists the DeepSeek models it can see. The extension will not use a different one, not even another Flash; see [ADR 0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md).
+- **A message saying the key cannot use the model** — the key itself is fine, but the account behind it does not have access to the model the extension runs on. Contact SipPulse AI support to have it enabled.
+- **"The SipPulse AI organization is out of credits"** — the US$5 starter credit has been used up. Add credit inside SipPulse AI and click **Evaluate this video** again; nothing needs changing in the extension.
 - **The summary says it was cut off** — the model hit its output limit. Try Fast.
 - **"This episode has no captions"** — also expected, and not a bug. Signal / Noise reads transcripts that already exist; it never generates them. See [ADR 0002](./docs/adr/0002-harvest-only-never-transcribe.md).
 - **It stopped working after a YouTube change** — possible; this is unofficial and uses no documented API. See [Reliability](#reliability).
-- **You edited the source** — run `npm run build` and then hit the refresh icon on the extension card in `chrome://extensions`.
+- **You edited the source code** — run `npm run build`, then click the circular arrow on the extension card in `chrome://extensions`.
 
 </details>
 
