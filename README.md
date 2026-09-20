@@ -14,6 +14,8 @@ It reads the transcript YouTube already has for the video, which takes a few sec
 
 Signal / Noise is the first *app da quinzena* — app of the fortnight — built on SipPulse AI.
 
+⭐ **If Signal / Noise saves you time, [give the project a star](https://github.com/sippulse/signal-noise)** — it is how other people find it.
+
 ## The ten-second version
 
 A 31-minute Y Combinator interview, 5,919 words. Here is the whole output:
@@ -203,6 +205,10 @@ The icons in `extension/icons/` are PNGs rendered from two SVGs — `icon-small.
 - [docs/adr/](./docs/adr/) — decisions: [0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md), why the extension now evaluates; [0005](./docs/adr/0005-the-skill-file-is-the-prompt.md), why the rules file itself is the prompt; [0006](./docs/adr/0006-a-side-panel-not-a-popup.md), why a side panel; [0007](./docs/adr/0007-the-extension-reads-the-transcript-youtube-shows.md), why the extension reads YouTube's own transcript panel; and [0001](./docs/adr/0001-browser-extension-because-sabr-killed-server-side-captions.md), kept as a record of a wrong turn
 - [store/](./store/) — the Chrome Web Store listing: texts, permission justifications and images ([LISTING.md](./store/LISTING.md))
 - [docs/spec/](./docs/spec/) — the original spec, now largely overtaken
+
+## Liked it?
+
+If Signal / Noise saved you from a video that was not worth your time, **[star the project on GitHub](https://github.com/sippulse/signal-noise)** ⭐. It takes one click and it is how other people find it. Found a bug or have an idea? [Open an issue](https://github.com/sippulse/signal-noise/issues).
 
 ## License
 
