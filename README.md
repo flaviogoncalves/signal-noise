@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./extension/icons/icon-128.png" alt="Signal / Noise logo: four grey bars of noise and one tall green bar of signal" width="96">
+</p>
+
 # Signal / Noise — yttranscribe + signal-noise
 
 Turn a YouTube video into a decision about whether to watch it.
@@ -216,6 +220,8 @@ npm run build     # CLI to dist/, extension to extension/js/
 Pure logic is tested — caption parsing, track selection, chapter parsing, URL parsing, formatting, prompt assembly, stream parsing, model resolution, and the Markdown renderer's escaping. `fetchEpisode` is a thin network adapter over a third-party API that changes without notice, so it is verified by running it rather than by fixtures that would give false confidence.
 
 `extension/js/` is generated from `src/`, and `extension/skill/SKILL.md` is copied from `skills/`; both are committed, so the extension can be loaded without a build step. Rebuild with `npm run build` after editing `src/` **or the skill** — the extension runs the copy, not the original.
+
+The icons in `extension/icons/` are PNGs rendered from two SVGs — `icon-small.svg`, drawn on the pixel grid, for 16 and 32px; `icon.svg` for 48 and 128px — and are committed too. After editing an SVG, re-render them with any Chrome: `CHROME=$(which google-chrome) node scripts/render-icons.mjs`.
 
 ## Docs
 
