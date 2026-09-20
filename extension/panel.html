@@ -64,6 +64,8 @@
       #summary ul, #summary ol { padding-left: 18px; }
       #summary li { margin: 4px 0; }
       #summary a { color: linktext; }
+      #summary pre { overflow-x: auto; background: rgba(128,128,128,.18); padding: 8px; border-radius: 6px; }
+      #summary pre code { background: none; padding: 0; }
       #summary code { font: 12px ui-monospace, monospace; background: rgba(128,128,128,.18); padding: 1px 4px; border-radius: 4px; }
       #summary blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--line); opacity: .9; }
       #summary table { border-collapse: collapse; width: 100%; font-size: 12px; }
@@ -81,10 +83,14 @@
       <summary>Settings — SipPulse AI key</summary>
       <label for="key">SipPulse AI key</label>
       <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your API key" />
-      <div class="row"><button id="save-key">Save key</button></div>
+      <div class="row">
+        <button id="save-key">Save key</button>
+        <button id="remove-key" class="quiet" hidden>Remove key</button>
+      </div>
       <div id="key-status" class="idle"></div>
       <div class="hint">
-        Stored only in this browser. Sent only to api.sippulse.ai, together with the transcript of the video you evaluate.
+        Stored only in this browser, until you click Remove key. Sent only to api.sippulse.ai, together with the
+        transcript of the video you evaluate.
         Get a key at <a href="https://sippulse.ai" target="_blank" rel="noopener noreferrer">sippulse.ai</a>.
       </div>
     </details>

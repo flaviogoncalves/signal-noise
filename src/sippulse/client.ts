@@ -2,10 +2,7 @@ const BASE_URL = "https://api.sippulse.ai/v1/openai";
 
 /** A failure the user can act on: a bad key, no credits, a rate limit, a refused request. */
 export class SipPulseError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-  ) {
+  constructor(message: string) {
     super(message);
     this.name = "SipPulseError";
   }
@@ -16,40 +13,54 @@ export interface ChatMessage {
   content: string;
 }
 
+/** A date stamped into a model id — `2024-11`, `20250115` — which is not a version. */
+const DATE_STAMP = /(?<!\d)(?:20\d{2}[-_.]?\d{2}(?:[-_.]?\d{2})?)(?!\d)/g;
+
+/** "4.1" as a version: `4.1`, `4-1`, `4_1` or `v41`, and never the start of `4.10`. */
+const VERSION_4_1 = /(?<![\d.])(?:v41|v?4[._-]1)(?![\d])/i;
+
 /**
- * Choose the DeepSeek Flash model from the ids a key can see. Pure.
+ * Find DeepSeek 4.1 Flash among the ids a key can see. Pure.
  *
  * The id is resolved from the account rather than hardcoded because the
- * catalog is per-organization and renames models between releases. 4.1 wins
- * when it is there; otherwise the highest-versioned Flash does.
+ * catalog is per-organization and spells its ids its own way. But it is this
+ * model or nothing: there is no "newest Flash" fallback, because a summary's
+ * quality is only attributable when the model that wrote it is the one named.
+ * When variants exist (`-lite`, a dated snapshot), the shortest id is the base model.
  */
 export function resolveModel(ids: string[]): string {
-  const flash = ids
-    .filter((id) => /deepseek/i.test(id) && /flash/i.test(id))
-    .sort((a, b) => a.localeCompare(b, "en", { numeric: true }));
+  const isFlash = (id: string): boolean => /deepseek/i.test(id) && /flash/i.test(id);
 
-  const chosen = flash.find((id) => /4[.\-_]1/.test(id)) ?? flash.at(-1);
+  const [chosen] = ids
+    .filter((id) => isFlash(id) && VERSION_4_1.test(id.replace(DATE_STAMP, "")))
+    .sort((a, b) => a.length - b.length || a.localeCompare(b));
   if (chosen) return chosen;
 
-  const seen = ids.length === 0 ? "none" : ids.slice(0, 8).join(", ");
-  throw new SipPulseError(
-    200,
-    `This key has no DeepSeek Flash model available. Models it can use: ${seen}.`,
-  );
+  const deepseek = ids.filter((id) => /deepseek/i.test(id));
+  const seen = (deepseek.length ? deepseek : ids).slice(0, 8).join(", ") || "none";
+  throw new SipPulseError(`This key cannot use DeepSeek 4.1 Flash. Models it can use: ${seen}.`);
+}
+
+export interface StreamParser {
+  /** Feed a chunk of the response; get back the summary text it completed. */
+  push(chunk: string): string;
+  /** The stream is over: get back whatever a missing final newline was holding. */
+  end(): string;
+  finishReason?: string;
 }
 
 /**
- * Accumulate a streamed completion. Pure — fed text, returns text.
+ * Accumulate a streamed completion. No I/O — fed text, returns text.
  *
  * Chunks split wherever the network pleases, including mid-line, so a partial
  * line is held back until its newline arrives. Only `delta.content` is signal:
  * a reasoning model also streams `reasoning_content`, which is the model
  * thinking out loud and must never reach the summary.
  */
-export function createStreamParser(): { push(chunk: string): string; finishReason?: string } {
+export function createStreamParser(): StreamParser {
   let buffer = "";
 
-  const parser: { push(chunk: string): string; finishReason?: string } = {
+  const parser: StreamParser = {
     push(chunk) {
       buffer += chunk;
       const lines = buffer.split("\n");
@@ -68,10 +79,7 @@ export function createStreamParser(): { push(chunk: string): string; finishReaso
         }
 
         if (event.error) {
-          throw new SipPulseError(
-            event.error.statusCode ?? 500,
-            event.error.message ?? "SipPulse AI failed mid-stream.",
-          );
+          throw new SipPulseError(event.error.message ?? "SipPulse AI failed mid-stream.");
         }
 
         const choice = event.choices?.[0];
@@ -80,8 +88,18 @@ export function createStreamParser(): { push(chunk: string): string; finishReaso
       }
       return text;
     },
+    end: () => parser.push("\n"),
   };
   return parser;
+}
+
+/** Read a completion that arrived as one JSON document instead of a stream. Pure. */
+export function readWholeCompletion(payload: WholeCompletion): { text: string; finishReason?: string } {
+  const choice = payload.choices?.[0];
+  return {
+    text: choice?.message?.content ?? "",
+    ...(choice?.finish_reason ? { finishReason: choice.finish_reason } : {}),
+  };
 }
 
 /** Turn an error response into something the user can act on. Pure. */
@@ -93,16 +111,18 @@ export function explainFailure(status: number, body: string): SipPulseError {
     // Not JSON — a gateway page. The status says enough.
   }
 
-  const reason =
-    status === 401 || status === 403
-      ? "SipPulse AI rejected the key. Check it in Settings."
-      : status === 402
-        ? "The SipPulse AI organization is out of credits. Top up and try again."
-        : status === 429
-          ? "SipPulse AI is rate-limiting this key. Wait a moment and try again."
-          : `SipPulse AI refused the request (HTTP ${status}).`;
+  const rejected = status === 401 || status === 403;
+  const reason = rejected
+    ? "SipPulse AI rejected the key. Check it in Settings."
+    : status === 402
+      ? "The SipPulse AI organization is out of credits. Top up and try again."
+      : status === 429
+        ? "SipPulse AI is rate-limiting this key. Wait a moment and try again."
+        : `SipPulse AI refused the request (HTTP ${status}).`;
 
-  return new SipPulseError(status, detail && status !== 401 ? `${reason} — ${detail}` : reason);
+  // A rejected key gets no detail: the API words it for a developer ("Authorization
+  // header not found"), which sends a user looking for a header instead of their key.
+  return new SipPulseError(detail && !rejected ? `${reason} — ${detail}` : reason);
 }
 
 /** The model ids this key can use. Doubles as the key check: a bad key fails here. */
@@ -131,6 +151,7 @@ export async function streamCompletion(request: {
     body: JSON.stringify({
       model: request.model,
       messages: request.messages,
+      // Low, because the job is fidelity to the transcript, not variety between runs.
       temperature: 0.2,
       stream: true,
     }),
@@ -141,11 +162,9 @@ export async function streamCompletion(request: {
 
   // A deployment that ignores `stream` answers with one JSON document.
   if (!response.body || response.headers.get("content-type")?.includes("application/json")) {
-    const payload = (await response.json()) as {
-      choices?: { message?: { content?: string }; finish_reason?: string }[];
-    };
-    request.onText(payload.choices?.[0]?.message?.content ?? "");
-    return payload.choices?.[0]?.finish_reason;
+    const whole = readWholeCompletion((await response.json()) as WholeCompletion);
+    request.onText(whole.text);
+    return whole.finishReason;
   }
 
   const parser = createStreamParser();
@@ -156,12 +175,16 @@ export async function streamCompletion(request: {
     const text = parser.push(value);
     if (text) request.onText(text);
   }
-  const tail = parser.push("\n");
+  const tail = parser.end();
   if (tail) request.onText(tail);
   return parser.finishReason;
 }
 
+interface WholeCompletion {
+  choices?: { message?: { content?: string | null }; finish_reason?: string | null }[];
+}
+
 interface StreamEvent {
-  error?: { statusCode?: number; message?: string };
+  error?: { message?: string };
   choices?: { delta?: { content?: string | null }; finish_reason?: string | null }[];
 }

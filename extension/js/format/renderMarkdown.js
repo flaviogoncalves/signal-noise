@@ -3,7 +3,8 @@
  *
  * The input is model output over a stranger's transcript, so it is hostile
  * until proven otherwise: everything is escaped before any markup is added,
- * and the only attribute ever written is an `href` that must be http(s).
+ * and the only attribute whose value comes from the input is an `href`, which
+ * must be http(s). Every other attribute written is a constant.
  */
 export function renderMarkdown(markdown) {
     const lines = markdown.replace(/\u0000/g, "").replace(/\r\n?/g, "\n").split("\n");
@@ -24,6 +25,15 @@ export function renderMarkdown(markdown) {
     };
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
+        if (/^\s*```/.test(line)) {
+            // A fence still open when the text ends is a half-streamed block: render what there is.
+            flush();
+            const code = [];
+            for (i++; i < lines.length && !/^\s*```\s*$/.test(lines[i]); i++)
+                code.push(lines[i]);
+            html.push(`<pre><code>${escapeHtml(code.join("\n"))}</code></pre>`);
+            continue;
+        }
         const heading = /^(#{1,6})\s+(.*)$/.exec(line);
         const bullet = /^\s*[-*+]\s+(.*)$/.exec(line);
         const numbered = /^\s*\d+[.)]\s+(.*)$/.exec(line);
@@ -104,5 +114,10 @@ function inline(text) {
         .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (whole, label, href) => /^https?:\/\//i.test(href)
         ? hold(`<a href="${href}" target="_blank" rel="noopener noreferrer">${emphasis(label)}</a>`)
         : whole);
-    return emphasis(escaped).replace(/\u0000(\d+)\u0000/g, (_, index) => held[Number(index)] ?? "");
+    // A link's label can itself hold a code span, so a restored item may carry a marker of its own.
+    let html = emphasis(escaped);
+    for (let pass = 0; pass <= held.length && html.includes("\u0000"); pass++) {
+        html = html.replace(/\u0000(\d+)\u0000/g, (_, index) => held[Number(index)] ?? "");
+    }
+    return html;
 }

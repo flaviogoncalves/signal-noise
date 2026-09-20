@@ -14,6 +14,15 @@ export const AUTO = "auto";
 /** Write in whatever language the video is in. Never the default — see the skill's language rule. */
 export const SOURCE = "source";
 
+/** What the user can pick: a listed language, or one of the two choices that are not a language. */
+export type LanguageChoice = (typeof LANGUAGES)[number]["value"] | typeof AUTO | typeof SOURCE;
+
+/** Read a stored choice back. Anything no longer offered — or never stored — is `auto`. Pure. */
+export function languageChoiceFrom(stored: unknown): LanguageChoice {
+  if (stored === SOURCE) return SOURCE;
+  return LANGUAGES.find((language) => language.value === stored)?.value ?? AUTO;
+}
+
 /**
  * The language to ask the model for, in words. Pure.
  *
@@ -21,11 +30,10 @@ export const SOURCE = "source";
  * panel always makes one — even "auto" is resolved to a named language here
  * rather than left for the model to guess from a transcript.
  */
-export function outputLanguage(choice: string | undefined, browserLocale: string): string {
+export function outputLanguage(choice: LanguageChoice, browserLocale: string): string {
   if (choice === SOURCE) return "the language the transcript itself is in";
-
-  const listed = LANGUAGES.find((language) => language.value === choice);
-  if (listed) return listed.name;
-
-  return new Intl.DisplayNames(["en"], { type: "language" }).of(browserLocale) ?? browserLocale;
+  if (choice === AUTO) {
+    return new Intl.DisplayNames(["en"], { type: "language" }).of(browserLocale) ?? browserLocale;
+  }
+  return LANGUAGES.find((language) => language.value === choice)!.name;
 }

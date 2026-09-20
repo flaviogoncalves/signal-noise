@@ -21,31 +21,42 @@ const ANDROID_CLIENT = {
 
 const PLAYER_URL = "https://www.youtube.com/youtubei/v1/player";
 
-export class NoCaptionsError extends Error {
+/**
+ * Anything that stops an episode from being harvested and that the user can be
+ * told about in plain words. Callers catch this one class; the subclasses say
+ * whether it was a refusal or a failure.
+ */
+export class EpisodeError extends Error {}
+
+/** An Uncaptioned Episode: a refusal. There is nothing to harvest, and retrying will not help. */
+export class NoCaptionsError extends EpisodeError {
   constructor(readonly videoId: string) {
     super("This episode has no captions, so there is no transcript to harvest.");
     this.name = "NoCaptionsError";
   }
 }
 
-export class NotPlayableError extends Error {}
+export class NotPlayableError extends EpisodeError {}
 
 /**
- * The episode has captions, but YouTube would not hand the track over.
+ * A Blocked Track: the episode has captions, but YouTube would not hand the track over.
  *
  * Distinct from {@link NoCaptionsError} on purpose: that one is a refusal —
  * there is nothing to harvest — while this one is a failure, and the caller
  * should try again rather than conclude the episode is uncaptioned.
  */
-export class TrackUnavailableError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-  ) {
+export class TrackUnavailableError extends EpisodeError {
+  constructor(message: string) {
     super(message);
     this.name = "TrackUnavailableError";
   }
 }
+
+/** How a caller reaches YouTube: directly from Node, or from inside the page in the extension. */
+export type Fetcher = (
+  url: string,
+  init: RequestInit,
+) => Promise<{ ok: boolean; status: number; body: string }>;
 
 export interface FetchedEpisode {
   episode: Episode;
@@ -103,7 +114,6 @@ export function pickTrack(payload: PlayerResponse, videoId: string): TrackChoice
 export function assertTrackBody(status: number, body: string): void {
   if (status === 429 || /automated queries/i.test(body)) {
     throw new TrackUnavailableError(
-      status,
       "YouTube is refusing caption downloads from this network right now " +
         `(HTTP ${status}). The episode does have captions — YouTube's own player ` +
         "cannot load them here either. Try again later or from another network.",
@@ -111,15 +121,11 @@ export function assertTrackBody(status: number, body: string): void {
   }
 
   if (status >= 400) {
-    throw new TrackUnavailableError(
-      status,
-      `YouTube refused to serve the caption track (HTTP ${status}).`,
-    );
+    throw new TrackUnavailableError(`YouTube refused to serve the caption track (HTTP ${status}).`);
   }
 
   if (!/<(?:p|text)[\s>]/.test(body)) {
     throw new TrackUnavailableError(
-      status,
       "YouTube returned something that is not a caption track. " +
         "The episode has captions, but they could not be downloaded.",
     );
@@ -157,20 +163,32 @@ export function buildEpisode(
   };
 }
 
-/** Fetch an episode directly. Used by the CLI, where no browser origin is involved. */
-export async function fetchEpisode(videoId: string): Promise<FetchedEpisode> {
+/**
+ * Harvest one episode through whatever fetcher the caller has.
+ *
+ * The sequence — player request, track choice, track download, body check —
+ * lives here once. The CLI and the extension differ only in where the request
+ * is allowed to come from, which is the fetcher's business.
+ */
+export async function fetchEpisodeWith(fetcher: Fetcher, videoId: string): Promise<FetchedEpisode> {
   const { url, init } = playerRequest(videoId);
-  const response = await fetch(url, init);
-  if (!response.ok) {
-    throw new NotPlayableError(`YouTube refused the request (HTTP ${response.status}).`);
-  }
+  const player = await fetcher(url, init);
+  if (!player.ok) throw new NotPlayableError(`YouTube refused the request (HTTP ${player.status}).`);
 
-  const payload = (await response.json()) as PlayerResponse;
+  const payload = JSON.parse(player.body) as PlayerResponse;
   const choice = pickTrack(payload, videoId);
-  const track = await fetch(choice.track.baseUrl);
-  const xml = await track.text();
-  assertTrackBody(track.status, xml);
-  return buildEpisode(payload, xml, videoId, choice);
+
+  const track = await fetcher(choice.track.baseUrl, {});
+  assertTrackBody(track.status, track.body);
+  return buildEpisode(payload, track.body, videoId, choice);
+}
+
+/** Fetch an episode directly. Used by the CLI, where no browser origin is involved. */
+export function fetchEpisode(videoId: string): Promise<FetchedEpisode> {
+  return fetchEpisodeWith(async (url, init) => {
+    const response = await fetch(url, init);
+    return { ok: response.ok, status: response.status, body: await response.text() };
+  }, videoId);
 }
 
 interface PlayerResponse {

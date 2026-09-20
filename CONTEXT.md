@@ -22,7 +22,7 @@ An episode for which every [[Transcript Source]] declined — YouTube has no cap
 
 ## Blocked Track
 
-A caption track that YouTube listed but then would not serve — it answers the download with a rate-limit page instead of captions. The episode is **not** an [[Uncaptioned Episode]]: the captions exist and the block is on the network, not the episode. This is a **failure, not a refusal**, and worth retrying.
+A caption track that YouTube listed but then would not hand over, for whatever reason. The episode is **not** an [[Uncaptioned Episode]]: the captions exist, and what stands in the way is between the tool and YouTube, not in the episode. This is a **failure, not a refusal**, and worth retrying.
 
 ## Transcript Source
 
@@ -34,8 +34,8 @@ To apply the `signal-noise` skill to a harvested transcript and show the result.
 
 ## Mode
 
-How much an evaluation reports. **Complete** emits every block of the skill's format that applies. **Fast** emits only the essential — verdict, what is new, at most five lines of signal. The mode never changes how carefully the material is judged: both run the same tests over the whole transcript. Defined by the skill, not by the extension.
+How much an evaluation reports. **Complete** reports everything the skill has to say; **Fast** reports only what is needed to decide. The mode never changes how carefully the material is judged: both judge the whole transcript by the same rules. A term of the skill, not of the extension.
 
 ## Output Language
 
-The language an evaluation is written in, chosen by the user and independent of the video's language. Always stated to the model explicitly; "browser language" is resolved to a named language before it is sent, never left for the model to infer.
+The language an evaluation is written in. It is the user's choice and is independent of the video's language — an English video can be evaluated in Portuguese. It is always a definite language: never "whatever seems right".

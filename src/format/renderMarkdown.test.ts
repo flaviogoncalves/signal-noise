@@ -48,6 +48,22 @@ describe("renderMarkdown", () => {
     expect(() => renderMarkdown("## What is new\n\nStripe **disclosed [25:17](https://www.you")).not.toThrow();
   });
 
+  it("renders a code span inside a link label", () => {
+    const html = renderMarkdown("see [the `--fast` flag](https://a.test/x)");
+    expect(html).toContain('<a href="https://a.test/x" target="_blank" rel="noopener noreferrer">the <code>--fast</code> flag</a>');
+    expect(html).not.toContain("\u0000");
+  });
+
+  it("renders a fenced block as code, escaped and untouched by inline markup", () => {
+    const html = renderMarkdown("```json\n{\"a\": \"**not bold** <b>\"}\n```\n\nafter");
+    expect(html).toContain("<pre><code>{&quot;a&quot;: &quot;**not bold** &lt;b&gt;&quot;}</code></pre>");
+    expect(html).toContain("<p>after</p>");
+  });
+
+  it("renders a fence that has not closed yet", () => {
+    expect(renderMarkdown("```\nhalf a bl")).toContain("<pre><code>half a bl</code></pre>");
+  });
+
   it("keeps a wrapped bullet as one item and a quote as a quote", () => {
     expect(renderMarkdown("- first line\n  continues\n- second")).toContain("<li>first line continues</li>");
     expect(renderMarkdown("> quoted *verbatim*")).toContain("<blockquote><p>quoted <em>verbatim</em></p></blockquote>");

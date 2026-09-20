@@ -8,9 +8,11 @@ Turn a YouTube video into a decision about whether to watch it.
 
 Three pieces, one question — **is this worth 31 minutes, and if not, which 90 seconds are?**
 
-- **Signal / Noise** — a Chrome extension that answers it next to the video. It harvests the episode's transcript, applies the skill below with DeepSeek Flash on [SipPulse AI](https://sippulse.ai), and shows the verdict in a side panel. The only configuration is a SipPulse AI key.
+- **Signal / Noise** — a Chrome extension that answers it next to the video. It harvests the episode's transcript, applies the skill below with DeepSeek 4.1 Flash on [SipPulse AI](https://sippulse.ai), and shows the verdict in a side panel. The only configuration is a SipPulse AI key.
 - **`signal-noise`** — the [skill](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview) itself: the rules that compress a transcript into a verdict, the facts, and a list of what to skip. The extension sends this exact file as its prompt; any agent can load it too.
 - **`yttranscribe`** — a CLI that prints a YouTube episode's transcript in about a second, headless and in batch. The extension's **Copy transcript** button does the same for the open video.
+
+Signal / Noise is the first *app da quinzena* — app of the fortnight — built on SipPulse AI.
 
 ## The ten-second version
 
@@ -62,15 +64,15 @@ Two parameters sit above the button, and both are remembered:
 
 **Copy transcript** still does what the extension used to be for: the episode's transcript on your clipboard, for pasting into anything else. **Copy summary** copies the evaluation as Markdown.
 
-The extension asks for four permissions — `sidePanel`, `scripting`, `storage`, and `clipboardWrite` — and is restricted to two hosts: `https://www.youtube.com/*` and `https://api.sippulse.ai/*`. It has no server of its own and no analytics. The key is stored in this browser only and never synced. Nothing leaves for SipPulse AI until you click Evaluate, and then what leaves is the transcript of that one video; Copy transcript talks to nobody but YouTube.
+The extension asks for four permissions — `sidePanel`, `scripting`, `storage`, and `clipboardWrite` — and is restricted to two hosts: `https://www.youtube.com/*` and `https://api.sippulse.ai/*`. It has no server of its own and no analytics. The key is stored in this browser only, never synced, and **Remove key** deletes it. Nothing leaves for SipPulse AI until you click Evaluate, and then what leaves is the transcript of that one video; Copy transcript talks to nobody but YouTube.
 
 <details>
 <summary><strong>If it does not work</strong></summary>
 
 - **"Manifest file is missing or unreadable"** — you selected the wrong folder in step 5. Select `extension/`, the one containing `manifest.json`.
 - **"Open a YouTube video first"** — expected on any other page. It only acts on `youtube.com/watch` pages.
-- **"SipPulse AI rejected the key"** — open **Settings** at the top of the panel and save the key again; saving re-checks it.
-- **"This key has no DeepSeek Flash model available"** — the key works, but its organization cannot use the model the extension runs on. The message lists the models it can see. The extension will not quietly use a different one; see [ADR 0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md).
+- **"SipPulse AI rejected the key"** — open **Settings** at the top of the panel and save the key again; saving re-checks it. **Remove key**, next to it, deletes the key from the browser.
+- **"This key cannot use DeepSeek 4.1 Flash"** — the key works, but its organization cannot use the model the extension runs on. The message lists the DeepSeek models it can see. The extension will not use a different one, not even another Flash; see [ADR 0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md).
 - **The summary says it was cut off** — the model hit its output limit. Try Fast.
 - **"This episode has no captions"** — also expected, and not a bug. yttranscribe harvests transcripts that already exist; it never generates them. See [ADR 0002](./docs/adr/0002-harvest-only-never-transcribe.md).
 - **It stopped working after a YouTube change** — possible; this is unofficial and uses no documented API. See [Reliability](#reliability).
@@ -204,15 +206,15 @@ The code is here if you want to know more: the network layer is [`src/youtube/fe
 
 - **Transcribe.** No speech-to-text, no audio — see [ADR 0002](./docs/adr/0002-harvest-only-never-transcribe.md). Uncaptioned episodes are refused, not guessed at.
 - **Anything but YouTube.** No Spotify, no Apple Podcasts.
-- **Offer a choice of provider or model.** One key, one model, resolved from the key — see [ADR 0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md). To use the skill with another model, load it into that model's agent instead.
-- **Verify externally, in the extension.** The skill's `Verified addition` block needs tools the extension does not have, so it is switched off there rather than filled from the model's memory.
+- **Offer a choice of provider or model.** One key, one model, found among the models the key can use — see [ADR 0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md). To use the skill with another model, load it into that model's agent instead.
+- **Verify externally, in the extension.** The skill's `Verified addition` block needs tools the extension does not have, so it is switched off there rather than filled from the model's memory — see [ADR 0005](./docs/adr/0005-the-skill-file-is-the-prompt.md). Complete in the extension is the skill's Complete minus that one block.
 
 The project name is a mild misnomer: it harvests transcripts and never transcribes. Kept because it is short.
 
 ## Development
 
 ```bash
-npm test          # 68 tests
+npm test          # 80 tests
 npm run typecheck
 npm run build     # CLI to dist/, extension to extension/js/
 ```
@@ -226,7 +228,7 @@ The icons in `extension/icons/` are PNGs rendered from two SVGs — `icon-small.
 ## Docs
 
 - [CONTEXT.md](./CONTEXT.md) — glossary
-- [docs/adr/](./docs/adr/) — decisions, including [0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md), why the extension now evaluates, and [0001](./docs/adr/0001-browser-extension-because-sabr-killed-server-side-captions.md), kept as a record of a wrong turn
+- [docs/adr/](./docs/adr/) — decisions: [0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md), why the extension now evaluates; [0005](./docs/adr/0005-the-skill-file-is-the-prompt.md), why the skill file itself is the prompt; [0006](./docs/adr/0006-a-side-panel-not-a-popup.md), why a side panel; and [0001](./docs/adr/0001-browser-extension-because-sabr-killed-server-side-captions.md), kept as a record of a wrong turn
 - [docs/spec/](./docs/spec/) — the original spec, now largely overtaken
 
 ## License

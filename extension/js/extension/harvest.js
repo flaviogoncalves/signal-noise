@@ -1,4 +1,5 @@
-import { playerRequest, pickTrack, buildEpisode, assertTrackBody, NotPlayableError, } from "../youtube/fetchEpisode.js";
+import { fetchEpisodeWith } from "../youtube/fetchEpisode.js";
+import { videoIdFrom } from "../youtube/videoId.js";
 /**
  * Fetch from inside the page rather than from the extension.
  *
@@ -8,31 +9,45 @@ import { playerRequest, pickTrack, buildEpisode, assertTrackBody, NotPlayableErr
  * page makes it same-origin and it succeeds. The request itself is passed in,
  * so the client identity lives in exactly one place.
  */
-async function fetchInPage(tabId, url, init) {
-    const [injection] = await chrome.scripting.executeScript({
-        target: { tabId },
-        world: "MAIN",
-        args: [url, init],
-        func: async (target, options) => {
-            const response = await fetch(target, options);
-            return { ok: response.ok, status: response.status, body: await response.text() };
-        },
-    });
-    if (!injection?.result)
-        throw new Error("The page did not respond. Try reloading the tab.");
-    return injection.result;
+function pageFetcher(tabId) {
+    return async (url, init) => {
+        const [injection] = await chrome.scripting.executeScript({
+            target: { tabId },
+            world: "MAIN",
+            args: [url, init],
+            func: async (target, options) => {
+                const response = await fetch(target, options);
+                return { ok: response.ok, status: response.status, body: await response.text() };
+            },
+        });
+        if (!injection?.result)
+            throw new Error("The page did not respond. Try reloading the tab.");
+        return injection.result;
+    };
+}
+/** The video in the tab the user is looking at, if that tab is showing one. */
+export async function activeVideo() {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const videoId = tab?.url ? videoIdFrom(tab.url) : undefined;
+    return videoId ? { tabId: tab.id, videoId } : undefined;
+}
+/**
+ * Whether the user is still looking at that video in that tab.
+ * The panel outlives navigation: the tab a summary was made from may since have
+ * moved to another video, gone to the background, or closed.
+ */
+export async function isStillWatching(video) {
+    try {
+        const tab = await chrome.tabs.get(video.tabId);
+        return tab.active === true && videoIdFrom(tab.url ?? "") === video.videoId;
+    }
+    catch {
+        return false;
+    }
 }
 /** Harvest the episode playing in a tab. */
-export async function harvest(tabId, videoId) {
-    const { url, init } = playerRequest(videoId);
-    const player = await fetchInPage(tabId, url, init);
-    if (!player.ok)
-        throw new NotPlayableError(`YouTube refused the request (HTTP ${player.status}).`);
-    const payload = JSON.parse(player.body);
-    const choice = pickTrack(payload, videoId);
-    const track = await fetchInPage(tabId, choice.track.baseUrl, {});
-    assertTrackBody(track.status, track.body);
-    return buildEpisode(payload, track.body, videoId, choice);
+export function harvest(tabId, videoId) {
+    return fetchEpisodeWith(pageFetcher(tabId), videoId);
 }
 /** Move the player in a tab to a second, without reloading the page. */
 export async function seek(tabId, seconds) {
