@@ -16,6 +16,7 @@
     "build": "npm run build:cli && npm run build:ext",
     "build:cli": "tsc -p tsconfig.cli.json",
     "build:ext": "tsc -p tsconfig.build.json && node scripts/copy-skill.mjs",
+    "package": "npm run build:ext && node scripts/package-extension.mjs",
     "cli": "node dist/cli.js"
   },
   "devDependencies": {
