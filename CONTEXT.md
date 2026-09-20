@@ -1,6 +1,6 @@
 # Context
 
-Glossary for `yttranscribe`. Terms only — no implementation detail.
+Glossary for `yttranscribe` and the Signal / Noise extension. Terms only — no implementation detail.
 
 ## Podcast
 
@@ -27,3 +27,15 @@ A caption track that YouTube listed but then would not serve — it answers the 
 ## Transcript Source
 
 A named strategy for obtaining a transcript for one episode. Each source either yields a transcript or declines, so they can be tried in order. Every transcript records which source produced it, so poor output can be attributed to the source.
+
+## Evaluate
+
+To apply the `signal-noise` skill to a harvested transcript and show the result. Evaluating is what the extension is for; harvesting is its first step. An [[Uncaptioned Episode]] is refused before anything is evaluated.
+
+## Mode
+
+How much an evaluation reports. **Complete** emits every block of the skill's format that applies. **Fast** emits only the essential — verdict, what is new, at most five lines of signal. The mode never changes how carefully the material is judged: both run the same tests over the whole transcript. Defined by the skill, not by the extension.
+
+## Output Language
+
+The language an evaluation is written in, chosen by the user and independent of the video's language. Always stated to the model explicitly; "browser language" is resolved to a named language before it is sent, never left for the model to infer.

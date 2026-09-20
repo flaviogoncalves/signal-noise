@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Signal / Noise</title>
+    <style>
+      :root { color-scheme: light dark; --line: rgba(128,128,128,.35); --good: #167a3c; --bad: #b3261e; }
+      @media (prefers-color-scheme: dark) { :root { --good: #6ee7a0; --bad: #ff9b93; } }
+      body { margin: 0; padding: 14px; font: 13px/1.5 system-ui, sans-serif; }
+      header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+      h1 { font-size: 14px; margin: 0; letter-spacing: .02em; }
+      header small { opacity: .6; }
+
+      button {
+        padding: 9px;
+        font: inherit;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: canvas;
+        color: canvastext;
+        cursor: pointer;
+      }
+      button:disabled { opacity: .55; cursor: default; }
+      button.primary { background: canvastext; color: canvas; border-color: canvastext; }
+      button.quiet { font-weight: 400; padding: 6px 9px; }
+      .row { display: flex; gap: 8px; margin-top: 8px; }
+      .row > * { flex: 1; }
+
+      fieldset { padding: 0; margin: 0; display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+      fieldset label { flex: 1; text-align: center; padding: 6px 4px; cursor: pointer; }
+      fieldset label small { display: block; opacity: .65; font-size: 11px; }
+      fieldset input { position: absolute; opacity: 0; pointer-events: none; }
+      fieldset label:has(input:checked) { background: rgba(128,128,128,.22); font-weight: 600; }
+      fieldset label:has(input:focus-visible) { outline: 2px solid highlight; outline-offset: -2px; }
+
+      label.field { display: flex; align-items: center; gap: 8px; margin-top: 8px; opacity: .85; }
+      select {
+        flex: 1; min-width: 0; padding: 6px; font: inherit;
+        border-radius: 6px; border: 1px solid var(--line); background: field; color: fieldtext;
+      }
+
+      details#settings { margin-bottom: 10px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+      details#settings summary { cursor: pointer; opacity: .75; }
+      details#settings label { display: block; margin: 8px 0 4px; }
+      input[type="password"] {
+        width: 100%; box-sizing: border-box; padding: 7px; font: 12px ui-monospace, monospace;
+        border-radius: 6px; border: 1px solid var(--line); background: field; color: fieldtext;
+      }
+      .hint { opacity: .65; font-size: 11px; margin-top: 6px; }
+
+      #status, #key-status { margin-top: 10px; min-height: 1.4em; }
+      #key-status:empty { display: none; }
+      #details { font-size: 11px; opacity: .7; }
+      #details:empty { display: none; }
+      .busy { opacity: .7; }
+      .good { color: var(--good); }
+      .bad { color: var(--bad); }
+
+      #summary { margin-top: 12px; overflow-wrap: anywhere; }
+      #summary:not(:empty) { border-top: 1px solid var(--line); padding-top: 4px; }
+      #summary h1, #summary h2, #summary h3 { font-size: 13px; margin: 16px 0 4px; letter-spacing: .03em; text-transform: uppercase; opacity: .75; }
+      #summary p, #summary ul, #summary ol { margin: 6px 0; }
+      #summary ul, #summary ol { padding-left: 18px; }
+      #summary li { margin: 4px 0; }
+      #summary a { color: linktext; }
+      #summary code { font: 12px ui-monospace, monospace; background: rgba(128,128,128,.18); padding: 1px 4px; border-radius: 4px; }
+      #summary blockquote { margin: 6px 0; padding-left: 10px; border-left: 3px solid var(--line); opacity: .9; }
+      #summary table { border-collapse: collapse; width: 100%; font-size: 12px; }
+      #summary th, #summary td { border: 1px solid var(--line); padding: 4px 6px; text-align: left; }
+      #summary hr { border: 0; border-top: 1px solid var(--line); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Signal / Noise</h1>
+      <small>Is this video worth your time?</small>
+    </header>
+
+    <details id="settings">
+      <summary>Settings — SipPulse AI key</summary>
+      <label for="key">SipPulse AI key</label>
+      <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your API key" />
+      <div class="row"><button id="save-key">Save key</button></div>
+      <div id="key-status" class="idle"></div>
+      <div class="hint">
+        Stored only in this browser. Sent only to api.sippulse.ai, together with the transcript of the video you evaluate.
+        Get a key at <a href="https://sippulse.ai" target="_blank" rel="noopener noreferrer">sippulse.ai</a>.
+      </div>
+    </details>
+
+    <fieldset aria-label="Mode">
+      <label><input type="radio" name="mode" id="mode-complete" value="complete" checked />Complete<small>every block</small></label>
+      <label><input type="radio" name="mode" id="mode-fast" value="fast" />Fast<small>only the essential</small></label>
+    </fieldset>
+
+    <label class="field" for="language">Output language <select id="language"></select></label>
+
+    <div class="row">
+      <button id="evaluate" class="primary">Evaluate this video</button>
+    </div>
+    <div class="row">
+      <button id="copy-transcript" class="quiet">Copy transcript</button>
+      <button id="copy-summary" class="quiet" hidden>Copy summary</button>
+    </div>
+
+    <div id="status" class="idle">Open a YouTube video and click Evaluate.</div>
+    <div id="details"></div>
+
+    <article id="summary"></article>
+
+    <script type="module" src="./js/extension/panel.js"></script>
+  </body>
+</html>

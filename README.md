@@ -1,13 +1,12 @@
-# yttranscribe + signal-noise
+# Signal / Noise — yttranscribe + signal-noise
 
 Turn a YouTube video into a decision about whether to watch it.
 
-Two pieces that chain together:
+Three pieces, one question — **is this worth 31 minutes, and if not, which 90 seconds are?**
 
-- **`yttranscribe`** — a Chrome extension (and CLI) that puts a YouTube episode's transcript on your clipboard in about a second. It does not summarise.
-- **`signal-noise`** — a [Claude Skill](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview) that compresses that transcript into a verdict, the facts, and a list of what to skip. It does not fetch.
-
-Each is useful alone. Together they answer one question fast: **is this worth 31 minutes, and if not, which 90 seconds are?**
+- **Signal / Noise** — a Chrome extension that answers it next to the video. It harvests the episode's transcript, applies the skill below with DeepSeek Flash on [SipPulse AI](https://sippulse.ai), and shows the verdict in a side panel. The only configuration is a SipPulse AI key.
+- **`signal-noise`** — the [skill](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview) itself: the rules that compress a transcript into a verdict, the facts, and a list of what to skip. The extension sends this exact file as its prompt; any agent can load it too.
+- **`yttranscribe`** — a CLI that prints a YouTube episode's transcript in about a second, headless and in batch. The extension's **Copy transcript** button does the same for the open video.
 
 ## The ten-second version
 
@@ -36,30 +35,39 @@ Note what happened to `17:20`. It is the most quotable chapter in the video, and
 
 ## Install the extension
 
-No build step, no Web Store, no account. About a minute.
+No build step, no Web Store. About a minute, plus a SipPulse AI key.
 
 1. **Download the code.** Either `git clone https://github.com/flaviogoncalves/yttranscribe.git`, or use **Code → Download ZIP** on this page and unzip it.
 2. Open Chrome and go to **`chrome://extensions`** (type it in the address bar — it is not in the menus).
 3. Turn on **Developer mode** with the toggle in the **top-right** corner. Nothing appears to happen; this just reveals the buttons in step 4.
 4. Click **Load unpacked** (top-left).
 5. In the folder picker, select the **`extension/`** folder inside the code you downloaded — **not** the top folder. You should be selecting the folder that directly contains `manifest.json`.
-6. "yttranscribe" now appears in your extension list. Click the puzzle-piece icon in the Chrome toolbar and **pin** it so the button is always visible.
+6. "Signal / Noise" now appears in your extension list. Click the puzzle-piece icon in the Chrome toolbar and **pin** it so the button is always visible.
+7. Click the button. A side panel opens with **Settings** already unfolded: paste your [SipPulse AI](https://sippulse.ai) key and click **Save key**. The key is checked on the spot, and the panel tells you which model it will use. That is the only configuration there is.
 
-**Using it:** open any YouTube video, click the yttranscribe button, and the transcript is on your clipboard. Paste it wherever you want it summarised.
+**Using it:** open any YouTube video, click the button, click **Evaluate this video**. The summary streams into the panel beside the player. Click any chapter anchor in it and the video jumps there — no reload, no new tab.
 
 <p align="center">
-  <img src="./docs/images/popup.png" alt="The yttranscribe popup: a title, a 'Copy transcript' button, and the line 'Open a YouTube video and click above.'" width="428">
+  <img src="./docs/images/panel.png" alt="The Signal / Noise side panel: a Complete/Fast switch, an output language menu, an 'Evaluate this video' button, and a streamed summary with a verdict and clickable chapter anchors." width="380">
 </p>
 
-That is the entire interface. One button, one status line. On success the status reads `Copied — 5,919 words.` with the track language, whether it was human-written or auto-generated, and the chapter count underneath; on failure it says which of those things went wrong, in plain language.
+Two parameters sit above the button, and both are remembered:
 
-The extension asks for three permissions — `activeTab`, `scripting`, and `clipboardWrite` — and is restricted to `https://www.youtube.com/*`. It has no server, no analytics, and no network calls other than to YouTube itself.
+- **Complete / Fast.** Complete is the skill's full output: verdict, what is new, thesis, signal, skip list, numbers, tensions. Fast keeps only the essential — verdict, what is new, at most five lines of signal — and ends with one line saying what Complete would add. Fast reports less; it does not read less. Both judge the whole transcript by the same rules.
+- **Output language.** Your browser's language by default, a language you pick, or "same as the video". Chapter titles, quotes and technical terms stay in the original either way, so anchors still match what YouTube shows you.
+
+**Copy transcript** still does what the extension used to be for: the episode's transcript on your clipboard, for pasting into anything else. **Copy summary** copies the evaluation as Markdown.
+
+The extension asks for four permissions — `sidePanel`, `scripting`, `storage`, and `clipboardWrite` — and is restricted to two hosts: `https://www.youtube.com/*` and `https://api.sippulse.ai/*`. It has no server of its own and no analytics. The key is stored in this browser only and never synced. Nothing leaves for SipPulse AI until you click Evaluate, and then what leaves is the transcript of that one video; Copy transcript talks to nobody but YouTube.
 
 <details>
 <summary><strong>If it does not work</strong></summary>
 
 - **"Manifest file is missing or unreadable"** — you selected the wrong folder in step 5. Select `extension/`, the one containing `manifest.json`.
-- **The button does nothing on a non-video page** — expected. It only acts on `youtube.com/watch` pages.
+- **"Open a YouTube video first"** — expected on any other page. It only acts on `youtube.com/watch` pages.
+- **"SipPulse AI rejected the key"** — open **Settings** at the top of the panel and save the key again; saving re-checks it.
+- **"This key has no DeepSeek Flash model available"** — the key works, but its organization cannot use the model the extension runs on. The message lists the models it can see. The extension will not quietly use a different one; see [ADR 0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md).
+- **The summary says it was cut off** — the model hit its output limit. Try Fast.
 - **"This episode has no captions"** — also expected, and not a bug. yttranscribe harvests transcripts that already exist; it never generates them. See [ADR 0002](./docs/adr/0002-harvest-only-never-transcribe.md).
 - **It stopped working after a YouTube change** — possible; this is unofficial and uses no documented API. See [Reliability](#reliability).
 - **You edited the source** — run `npm run build` and then hit the refresh icon on the extension card in `chrome://extensions`.
@@ -132,10 +140,12 @@ Tool-specific homes, if you prefer them to `AGENTS.md`: Cursor reads `.cursor/ru
 
 **What you lose off-Claude:** automatic triggering from the `description`. Elsewhere the agent only follows the skill if your instructions file tells it to, or if you ask for it by name.
 
-## Using them together
+## Using the skill without the extension
 
-1. Open a video. Click the extension. The transcript is on your clipboard.
-2. Paste it into Claude and ask for a summary — or just paste it, since the skill triggers on its own.
+The extension is the short path. The long one still works, and is the one to use for anything that is not a YouTube video, or with a model of your own choosing:
+
+1. Open a video. Click **Copy transcript** in the panel — or run the CLI.
+2. Paste it into Claude and ask for a summary — or just paste it, since the skill triggers on its own. Ask for it "fast" to get Fast mode.
 
 The transcript arrives with a header that makes the paste self-describing:
 
@@ -181,6 +191,7 @@ The code is here if you want to know more: the network layer is [`src/youtube/fe
 
 **Does:**
 
+- Evaluate the open YouTube video in a side panel, Complete or Fast, in the language you choose
 - Fetch the existing transcript for any YouTube video, headless, in batch
 - Prefer human-written captions in the original language; never silently hand you a translation
 - Refuse plainly when an episode has no captions
@@ -189,26 +200,27 @@ The code is here if you want to know more: the network layer is [`src/youtube/fe
 
 - **Transcribe.** No speech-to-text, no audio — see [ADR 0002](./docs/adr/0002-harvest-only-never-transcribe.md). Uncaptioned episodes are refused, not guessed at.
 - **Anything but YouTube.** No Spotify, no Apple Podcasts.
-- **Summarise, in the extension.** That is `signal-noise`'s job, and keeping them separate means you can point either half at something else.
+- **Offer a choice of provider or model.** One key, one model, resolved from the key — see [ADR 0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md). To use the skill with another model, load it into that model's agent instead.
+- **Verify externally, in the extension.** The skill's `Verified addition` block needs tools the extension does not have, so it is switched off there rather than filled from the model's memory.
 
 The project name is a mild misnomer: it harvests transcripts and never transcribes. Kept because it is short.
 
 ## Development
 
 ```bash
-npm test          # 30 tests
+npm test          # 68 tests
 npm run typecheck
 npm run build     # CLI to dist/, extension to extension/js/
 ```
 
-Pure logic is tested — caption parsing, track selection, chapter parsing, URL parsing, formatting. `fetchEpisode` is a thin network adapter over a third-party API that changes without notice, so it is verified by running it rather than by fixtures that would give false confidence.
+Pure logic is tested — caption parsing, track selection, chapter parsing, URL parsing, formatting, prompt assembly, stream parsing, model resolution, and the Markdown renderer's escaping. `fetchEpisode` is a thin network adapter over a third-party API that changes without notice, so it is verified by running it rather than by fixtures that would give false confidence.
 
-`extension/js/` is generated from `src/` and committed, so the extension can be loaded without a build step. Rebuild it with `npm run build` after editing `src/`.
+`extension/js/` is generated from `src/`, and `extension/skill/SKILL.md` is copied from `skills/`; both are committed, so the extension can be loaded without a build step. Rebuild with `npm run build` after editing `src/` **or the skill** — the extension runs the copy, not the original.
 
 ## Docs
 
 - [CONTEXT.md](./CONTEXT.md) — glossary
-- [docs/adr/](./docs/adr/) — decisions, including [0001](./docs/adr/0001-browser-extension-because-sabr-killed-server-side-captions.md), kept as a record of a wrong turn
+- [docs/adr/](./docs/adr/) — decisions, including [0004](./docs/adr/0004-the-extension-evaluates-through-sippulse-ai.md), why the extension now evaluates, and [0001](./docs/adr/0001-browser-extension-because-sabr-killed-server-side-captions.md), kept as a record of a wrong turn
 - [docs/spec/](./docs/spec/) — the original spec, now largely overtaken
 
 ## License

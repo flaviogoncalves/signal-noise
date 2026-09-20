@@ -1,12 +1,19 @@
 {
   "manifest_version": 3,
-  "name": "yttranscribe",
-  "version": "0.3.0",
-  "description": "Copies a YouTube episode's transcript to the clipboard.",
+  "name": "Signal / Noise",
+  "version": "0.4.0",
+  "description": "Tells you whether a YouTube video is worth your time: what is new in it, what it changes, and which chapters to skip.",
+  "minimum_chrome_version": "116",
   "action": {
-    "default_title": "Copy transcript",
-    "default_popup": "popup.html"
+    "default_title": "Signal / Noise"
   },
-  "permissions": ["activeTab", "scripting", "clipboardWrite"],
-  "host_permissions": ["https://www.youtube.com/*"]
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+  "background": {
+    "service_worker": "js/extension/background.js",
+    "type": "module"
+  },
+  "permissions": ["sidePanel", "scripting", "storage", "clipboardWrite"],
+  "host_permissions": ["https://www.youtube.com/*", "https://api.sippulse.ai/*"]
 }
