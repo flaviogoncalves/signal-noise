@@ -27,6 +27,21 @@ export class NoCaptionsError extends Error {
 }
 export class NotPlayableError extends Error {
 }
+/**
+ * The episode has captions, but YouTube would not hand the track over.
+ *
+ * Distinct from {@link NoCaptionsError} on purpose: that one is a refusal —
+ * there is nothing to harvest — while this one is a failure, and the caller
+ * should try again rather than conclude the episode is uncaptioned.
+ */
+export class TrackUnavailableError extends Error {
+    status;
+    constructor(status, message) {
+        super(message);
+        this.status = status;
+        this.name = "TrackUnavailableError";
+    }
+}
 /** The body to POST to the player endpoint. Shared so every caller claims the same client. */
 export function playerRequest(videoId) {
     return {
@@ -61,6 +76,29 @@ export function pickTrack(payload, videoId) {
         throw new NoCaptionsError(videoId);
     return choice;
 }
+/**
+ * Check that a caption-track response really is a caption track. Pure.
+ *
+ * A blocked timedtext request is not answered with an error the way the player
+ * endpoint answers one — YouTube serves an HTTP 429 carrying Google's "Sorry"
+ * interstitial. That page parses to zero cues, and zero cues used to surface as
+ * "this episode has no captions", which blames the episode for a block on the
+ * network. The track list said the captions exist; believe it.
+ */
+export function assertTrackBody(status, body) {
+    if (status === 429 || /automated queries/i.test(body)) {
+        throw new TrackUnavailableError(status, "YouTube is refusing caption downloads from this network right now " +
+            `(HTTP ${status}). The episode does have captions — YouTube's own player ` +
+            "cannot load them here either. Try again later or from another network.");
+    }
+    if (status >= 400) {
+        throw new TrackUnavailableError(status, `YouTube refused to serve the caption track (HTTP ${status}).`);
+    }
+    if (!/<(?:p|text)[\s>]/.test(body)) {
+        throw new TrackUnavailableError(status, "YouTube returned something that is not a caption track. " +
+            "The episode has captions, but they could not be downloaded.");
+    }
+}
 /** Assemble the episode from a player response and its fetched track. Pure. */
 export function buildEpisode(payload, xml, videoId, choice) {
     const details = payload.videoDetails;
@@ -94,6 +132,8 @@ export async function fetchEpisode(videoId) {
     }
     const payload = (await response.json());
     const choice = pickTrack(payload, videoId);
-    const xml = await (await fetch(choice.track.baseUrl)).text();
+    const track = await fetch(choice.track.baseUrl);
+    const xml = await track.text();
+    assertTrackBody(track.status, xml);
     return buildEpisode(payload, xml, videoId, choice);
 }

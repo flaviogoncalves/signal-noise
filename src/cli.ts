@@ -2,7 +2,12 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { formatForClipboard } from "./format/formatForClipboard.js";
-import { fetchEpisode, NoCaptionsError, NotPlayableError } from "./youtube/fetchEpisode.js";
+import {
+  fetchEpisode,
+  NoCaptionsError,
+  NotPlayableError,
+  TrackUnavailableError,
+} from "./youtube/fetchEpisode.js";
 import { videoIdFrom } from "./youtube/videoId.js";
 
 const USAGE = `
@@ -84,9 +89,11 @@ async function main(argv: string[]): Promise<number> {
       }
     } catch (error) {
       failures++;
-      if (error instanceof NoCaptionsError) {
-        process.stderr.write(`${videoId}: ${error.message}\n`);
-      } else if (error instanceof NotPlayableError) {
+      if (
+        error instanceof NoCaptionsError ||
+        error instanceof NotPlayableError ||
+        error instanceof TrackUnavailableError
+      ) {
         process.stderr.write(`${videoId}: ${error.message}\n`);
       } else {
         process.stderr.write(`${videoId}: ${String(error)}\n`);
