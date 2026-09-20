@@ -206,5 +206,3 @@ The icons in `extension/icons/` are PNGs rendered from two SVGs — `icon-small.
 [Creative Commons Attribution-NonCommercial 4.0 International](./LICENSE) (CC BY-NC 4.0).
 
 In plain words: you may use, copy, change and share Signal / Noise, **as long as you credit the author and do not use it commercially**. Selling it, bundling it into a paid product or service, or using it to run a business offering is not allowed under this license — for that, contact the author for a commercial license.
-
-Versions up to and including v0.4.2 were published under the MIT License, and remain available under it.
