@@ -3,10 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "license": "CC-BY-NC-4.0",
-  "author": "Flavio E Goncalves",
+  "author": "SipPulse <info@sippulse.com>",
+  "contributors": ["Flavio E Goncalves"],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/flaviogoncalves/signal-noise.git"
+    "url": "git+https://github.com/sippulse/signal-noise.git"
   },
   "type": "module",
   "scripts": {

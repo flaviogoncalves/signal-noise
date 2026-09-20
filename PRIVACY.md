@@ -7,8 +7,8 @@ Signal / Noise is a Chrome extension that tells you whether a YouTube video is w
 ## The short version
 
 - The extension does nothing until you click one of its buttons.
-- When you click **Evaluate this video**, the transcript of the video you have open is sent to SipPulse AI, with your SipPulse AI key, to produce the summary. That is the only thing that ever leaves your browser.
-- Nothing is sent to the extension's author. There is no server of ours, no analytics, no tracking, and no advertising.
+- When you click **Evaluate this video**, the transcript of the video you have open is sent to SipPulse AI, with your SipPulse AI key, to produce the summary. Apart from checking that your key is valid, that is the only thing that ever leaves your browser.
+- Nothing else is sent to SipPulse, or to anyone. There is no other server, no analytics, no tracking, and no advertising.
 
 ## What the extension reads
 
@@ -29,7 +29,7 @@ It does not read any other tab, any other website, your browsing history, your Y
 
 When you save your key, and again at the start of each evaluation, the extension also asks SipPulse AI which AI models your key may use. That request carries your key and nothing about any video.
 
-SipPulse AI processes this data to generate the summary, under its own terms and privacy policy, available at [sippulse.ai](https://sippulse.ai). The extension's author is affiliated with SipPulse, the company that operates SipPulse AI.
+SipPulse AI processes this data to generate the summary, under its own terms and privacy policy, available at [sippulse.ai](https://sippulse.ai). Signal / Noise is published by SipPulse, the same company that operates SipPulse AI.
 
 **To YouTube (`www.youtube.com`):** the same requests your browser makes when you open a video page and its transcript. The extension sends YouTube nothing about you that YouTube would not otherwise receive.
 
@@ -60,6 +60,6 @@ If this policy changes, the new version will be published at this address with a
 
 ## Contact
 
-Questions or concerns: open an issue at [github.com/flaviogoncalves/signal-noise/issues](https://github.com/flaviogoncalves/signal-noise/issues).
+Questions or concerns: write to [info@sippulse.com](mailto:info@sippulse.com), or open an issue at [github.com/sippulse/signal-noise/issues](https://github.com/sippulse/signal-noise/issues).
 
-The extension's source code is public at [github.com/flaviogoncalves/signal-noise](https://github.com/flaviogoncalves/signal-noise), so every statement above can be checked.
+The extension's source code is public at [github.com/sippulse/signal-noise](https://github.com/sippulse/signal-noise), so every statement above can be checked.

@@ -60,7 +60,7 @@ The key is what lets the extension use SipPulse AI. A new account comes with a *
 
 ### Part 2 — Put the extension in Chrome (2 minutes)
 
-1. **Download it.** Click **[Download Signal / Noise (ZIP)](https://github.com/flaviogoncalves/signal-noise/archive/refs/heads/main.zip)**. A file named `signal-noise-main.zip` goes to your **Downloads** folder.
+1. **Download it.** Click **[Download Signal / Noise (ZIP)](https://github.com/sippulse/signal-noise/archive/refs/heads/main.zip)**. A file named `signal-noise-main.zip` goes to your **Downloads** folder.
 2. **Unzip it.**
    - **Windows:** right-click the file, choose **Extract All…**, then click **Extract**.
    - **Mac:** double-click the file.
@@ -169,7 +169,7 @@ Neither is needed to use the extension.
 **A command-line transcript fetcher.** The same harvesting code runs headless, for batches and for piping into other tools. Requires Node 18+.
 
 ```bash
-git clone https://github.com/flaviogoncalves/signal-noise.git
+git clone https://github.com/sippulse/signal-noise.git
 cd signal-noise
 npm install && npm run build
 
@@ -208,4 +208,6 @@ The icons in `extension/icons/` are PNGs rendered from two SVGs — `icon-small.
 
 [Creative Commons Attribution-NonCommercial 4.0 International](./LICENSE) (CC BY-NC 4.0).
 
-In plain words: you may use, copy, change and share Signal / Noise, **as long as you credit the author and do not use it commercially**. Selling it, bundling it into a paid product or service, or using it to run a business offering is not allowed under this license — for that, contact the author for a commercial license.
+In plain words: you may use, copy, change and share Signal / Noise, **as long as you credit SipPulse and do not use it commercially**. Selling it, bundling it into a paid product or service, or using it to run a business offering is not allowed under this license — for a commercial license, write to [info@sippulse.com](mailto:info@sippulse.com).
+
+Copyright © 2026 SipPulse.

@@ -49,8 +49,8 @@ PRIVACY
 • Nothing happens until you click a button.
 • When you click Evaluate, the transcript of that one video is sent to SipPulse AI, with your key, to produce the summary. Nothing else ever leaves your browser.
 • Your key is stored in this browser only, never synced, and one click removes it.
-• No analytics, no tracking, no ads, no server of ours.
-The full policy and the complete source code are public: github.com/flaviogoncalves/signal-noise
+• No analytics, no tracking, no ads, no server other than SipPulse AI itself.
+The full policy and the complete source code are public: github.com/sippulse/signal-noise
 
 Signal / Noise is an independent project and is not affiliated with, endorsed by, or sponsored by YouTube or Google. YouTube is a trademark of Google LLC.
 ```
@@ -64,9 +64,9 @@ Signal / Noise is an independent project and is not affiliated with, endorsed by
 | Small promo tile (440×280) | `promo-small-440x280.png` |
 | Marquee promo tile (1400×560) | `promo-marquee-1400x560.png` |
 
-**Homepage URL:** `https://github.com/flaviogoncalves/signal-noise`
+**Homepage URL:** `https://github.com/sippulse/signal-noise`
 
-**Support URL:** `https://github.com/flaviogoncalves/signal-noise/issues`
+**Support URL:** `https://github.com/sippulse/signal-noise/issues`
 
 ## Privacy practices tab
 
@@ -123,7 +123,7 @@ Leave unticked: personally identifiable information, health, financial and payme
 - [x] I do not use or transfer user data for purposes that are unrelated to my item's single purpose.
 - [x] I do not use or transfer user data to determine creditworthiness or for lending purposes.
 
-**Privacy policy URL:** `https://github.com/flaviogoncalves/signal-noise/blob/main/PRIVACY.md`
+**Privacy policy URL:** `https://github.com/sippulse/signal-noise/blob/main/PRIVACY.md`
 
 ## Test instructions tab
 
